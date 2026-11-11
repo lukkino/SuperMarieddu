@@ -453,12 +453,14 @@ function houses(g, x0, x1, topFn, rowsN, r, pals) {
     }
   }
 }
+// bandiera dei Quattro Mori 19x13: bordino grigio, croce rossa, teste di profilo con la benda bianca
 function fourMoors(g, x, y) {
-  g.fillStyle = '#ffffff'; g.fillRect(x, y, 11, 7);
-  g.fillStyle = '#d83030'; g.fillRect(x + 5, y, 1, 7); g.fillRect(x, y + 3, 11, 1);
-  for (const [mx, my] of [[x + 1, y], [x + 7, y], [x + 1, y + 4], [x + 7, y + 4]]) {
-    g.fillStyle = '#1b1424'; g.fillRect(mx + 1, my + 1, 2, 2); g.fillStyle = '#ffffff'; g.fillRect(mx + 1, my + 1, 2, 1); g.fillStyle = '#1b1424'; g.fillRect(mx + 1, my, 2, 1);
-  }
+  const R = (rx, ry, w, h, c) => { g.fillStyle = c; g.fillRect(rx, ry, w, h); };
+  R(x, y, 19, 13, '#b8b8c0'); R(x + 1, y + 1, 17, 11, '#ffffff');
+  R(x + 8, y + 1, 3, 11, '#d83030'); R(x + 1, y + 5, 17, 3, '#d83030');
+  const moor = [".KKK.", "KKWWW", "KKKK.", ".KK.."];
+  for (const [qx, qy] of [[x + 2, y + 1], [x + 12, y + 1], [x + 2, y + 8], [x + 12, y + 8]])
+    moor.forEach((row, j) => [...row].forEach((ch, i) => { if (ch !== '.') R(qx + i, qy + j, 1, 1, ch === 'K' ? '#1b1424' : '#ffffff'); }));
 }
 const PASTEL = [['#e4dccc', '#d8c8b8', '#ecd8b8', '#e0d0d0'], ['#f0e0b0', '#f2cc80', '#e8b0a0', '#f0ece0', '#d8c8a8'],
                 ['#f4d070', '#e89c84', '#f6f0e0', '#e8c890', '#f4b8a0', '#c8d8a0']];
@@ -646,11 +648,7 @@ const MID = mk(3138, VH, g => {
   rect(fx - 24, 41, 3, 1, '#c8a040'); rect(fx + 2, 41, 3, 1, '#c8a040');
   rect(fx - 22, 43, 19, 13, '#b8b8c0'); rect(fx - 21, 44, 6, 11, '#2a9a4a'); rect(fx - 15, 44, 6, 11, '#ffffff'); rect(fx - 9, 44, 5, 11, '#d83030');   // tricolore
   const sx = fx + 4, sy = 43;                                                                      // bandiera dei Quattro Mori, grande
-  rect(sx, sy, 19, 13, '#b8b8c0'); rect(sx + 1, sy + 1, 17, 11, '#ffffff');
-  rect(sx + 8, sy + 1, 3, 11, '#d83030'); rect(sx + 1, sy + 5, 17, 3, '#d83030');
-  const moor = [".KKK.", "KKWWW", "KKKK.", ".KK.."];                                                // testa di profilo con la benda sulla fronte
-  for (const [qx, qy] of [[sx + 2, sy + 1], [sx + 12, sy + 1], [sx + 2, sy + 8], [sx + 12, sy + 8]])
-    moor.forEach((row, j) => [...row].forEach((ch, i) => { if (ch !== '.') px(g, qx + i, qy + j, ch === 'K' ? '#1b1424' : '#ffffff'); }));
+  fourMoors(g, sx, sy);
 
   g.save(); g.translate(720, 0);                                                                 // Castello e Pirri piu' avanti
   // ===== CASTELLO =====
@@ -673,8 +671,8 @@ const MID = mk(3138, VH, g => {
   rect(bx, 79, bw, 1, '#fff6dc'); rect(bx, 85, bw, 1, '#cdbf98');                                  // balaustra della terrazza
   for (let x = bx + 1; x < bx + bw; x += 3) rect(x, 80, 1, 5, '#ece0bc');
   rect(574, 62, 44, 3, '#d8c8a0'); rect(576, 65, 40, 21, '#ece0bc'); opening(588, 70, 16, 16, '#4a4052');
-  rect(595, 46, 1, 16, '#5a5a6a');                                                                 // bandiera dei Quattro Mori
-  fourMoors(g, 596, 45);
+  rect(595, 30, 1, 32, '#5a5a6a'); rect(594, 29, 3, 1, '#c8a040');                                                                 // bandiera dei Quattro Mori
+  fourMoors(g, 596, 31);
   // Torre dell'Elefante
   const tower = (tx, ty, w, elephant) => {
     rect(tx, ty, w, 160 - ty, '#efe6cc');
