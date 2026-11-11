@@ -1091,7 +1091,7 @@ function burst(x, y, cols, n = 8) {
   for (let i = 0; i < n; i++) parts.push({ x, y, vx: (Math.random() - .5) * 3, vy: -Math.random() * 3 - .5, t: 30 + Math.random() * 15, col: cols[i % cols.length] });
 }
 // fumetto quando un nemico ti prende
-const EMSG = { mer: 'OH NO, UNA MERDONA!', mam: 'OH NO, UN MAMUTHONE!', por: 'OH NO, UN PORCHEDDU!', park: 'OH NO, UN PARCHEGGIATORE ABUSIVO!', gra: 'OH NO, UN GRANCHIO!', pol: 'OH NO, UN POLPO!', pav: 'OH NO, UN PAVONE!', gull: 'OH NO, UN GABBIANO!' };
+const EMSG = { mer: 'OH NO, UNA MERDONA!', mam: 'OH NO, UN MAMUTHONE!', por: 'OH NO, UN PORCHEDDU!', park: 'OH NO, UN PARCHEGGIATORE ABUSIVO!', gra: 'OH NO, UN GRANCHIO!', pol: 'OH NO, UN POLPO!', pav: 'OH NO, UN PAVONE!', gull: 'OH NO, UNU PILLONI!' };
 function die(msg) {
   if (P.dead) return;
   P.msg = msg || ''; P.msgX = P.x + P.w / 2; P.msgY = Math.min(P.y, 10 * T - 4);   // se cadi, il fumetto resta a filo strada
