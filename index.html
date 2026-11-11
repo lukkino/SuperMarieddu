@@ -641,9 +641,15 @@ const MID = mk(3138, VH, g => {
     for (let y = 70; y < 140; y += 16) opening(tx + 3, y, 6, 10, '#5a5a72');
   }
   const fx = pc0 + (pcw >> 1);                                                                   // bandiere: Italia e Sardegna
-  rect(fx - 6, 62, 1, 12, '#5a5a6a'); rect(fx + 5, 62, 1, 12, '#5a5a6a');
-  rect(fx - 5, 62, 2, 4, '#2a9a4a'); rect(fx - 3, 62, 2, 4, '#ffffff'); rect(fx - 1, 62, 2, 4, '#d83030');
-  fourMoors(g, fx + 6, 61);
+  rect(fx - 23, 42, 1, 34, '#5a5a6a'); rect(fx + 3, 42, 1, 34, '#5a5a6a');                       // aste
+  rect(fx - 24, 41, 3, 1, '#c8a040'); rect(fx + 2, 41, 3, 1, '#c8a040');
+  rect(fx - 22, 43, 19, 13, '#b8b8c0'); rect(fx - 21, 44, 6, 11, '#2a9a4a'); rect(fx - 15, 44, 6, 11, '#ffffff'); rect(fx - 9, 44, 5, 11, '#d83030');   // tricolore
+  const sx = fx + 4, sy = 43;                                                                      // bandiera dei Quattro Mori, grande
+  rect(sx, sy, 19, 13, '#b8b8c0'); rect(sx + 1, sy + 1, 17, 11, '#ffffff');
+  rect(sx + 8, sy + 1, 3, 11, '#d83030'); rect(sx + 1, sy + 5, 17, 3, '#d83030');
+  const moor = [".KKK.", "KKWWW", "KKKK.", ".KK.."];                                                // testa di profilo con la benda sulla fronte
+  for (const [qx, qy] of [[sx + 2, sy + 1], [sx + 12, sy + 1], [sx + 2, sy + 8], [sx + 12, sy + 8]])
+    moor.forEach((row, j) => [...row].forEach((ch, i) => { if (ch !== '.') px(g, qx + i, qy + j, ch === 'K' ? '#1b1424' : '#ffffff'); }));
 
   g.save(); g.translate(720, 0);                                                                 // Castello e Pirri piu' avanti
   // ===== CASTELLO =====
