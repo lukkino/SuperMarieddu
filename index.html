@@ -760,7 +760,7 @@ function burst(x, y, cols, n = 8) {
 const EMSG = { liz: 'OH NO, UN TILIGUGU!', mam: 'OH NO, UN MAMUTHONE!', por: 'OH NO, UN PORCHEDDU!', gull: 'OH NO, UN GABBIANO!' };
 function die(msg) {
   if (P.dead) return;
-  P.msg = msg || ''; P.msgX = P.x + P.w / 2; P.msgY = P.y;
+  P.msg = msg || ''; P.msgX = P.x + P.w / 2; P.msgY = Math.min(P.y, 10 * T - 4);   // se cadi, il fumetto resta a filo strada
   P.dead = true; P.deadT = 0; P.vx = 0; P.vy = P.y > VH ? 0 : -5; SFX.die();
 }
 function hitBlock(tx, ty) {
@@ -819,12 +819,13 @@ function updatePlay() {
   if (cy === 1) { P.onGround = true; P.vy = 0; }
   else if (cy) { P.vy = .5; P.jumping = false; hitBlock(cy.tx, cy.ty); }
   P.anim += Math.abs(P.vx) * .12;
-  if (P.y > VH + 8) die();
+  if (P.y > VH + 8) die(zoneOf(Math.floor((P.x + P.w / 2) / T)) === 0 ? 'SPLASH! FINITO IN MARE!' : 'OH NO, CHE BURRONE!');
 
   // fichi d'india
   for (let ty = Math.floor(P.y / T); ty <= Math.floor((P.y + P.h) / T); ty++)
     for (let tx = Math.floor(P.x / T); tx <= Math.floor((P.x + P.w) / T); tx++)
-      if (tileAt(tx, ty) === 'C' && overlap(P, { x: tx * T + 3, y: ty * T + 5, w: 10, h: 11 })) die();
+      if (tileAt(tx, ty) === 'C' && overlap(P, { x: tx * T + 3, y: ty * T + 5, w: 10, h: 11 }))
+        die(zoneOf(tx) === 0 ? 'AHIA, UN RICCIO DI MARE!' : "AHIA, UN FICO D'INDIA!");
 
   // tessere
   for (const it of items) if (!it.got && overlap(P, it)) { it.got = true; SFX.coin(); addTess(1, it.x, it.y); burst(it.x + 4, it.y + 4, ['#f8e070', '#fff6b0'], 4); }
