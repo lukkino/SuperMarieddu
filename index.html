@@ -205,7 +205,7 @@ function flipH(img) { return mk(img.width, img.height, g => { g.translate(img.wi
 const PAL = {
   K:'#1b1424', R:'#d4382c', r:'#8a1e22', S:'#f2b98a', H:'#5a2e1a', W:'#f4ecd8', B:'#2f56b0', b:'#1c3270',
   G:'#5cb03c', g:'#2e6a26', Y:'#f0c040', y:'#a8701c', O:'#e87818', L:'#98a0b8',
-  V:'#dcff3a', J:'#ffe03c', P:'#ffb0c8', p:'#d8708e', m:'#2a1a14', k:'#24202c', z:'#6a6478'
+  V:'#dcff3a', J:'#ffe03c', n:'#8a5a34', u:'#d4a66c', P:'#ffb0c8', p:'#d8708e', m:'#2a1a14', k:'#24202c', z:'#6a6478'
 };
 function sprite(rows) {
   return mk(rows[0].length, rows.length, g => rows.forEach((row, y) => [...row].forEach((ch, x) => {
@@ -222,10 +222,10 @@ SPR.jump  = sprite(["S..RRRR..S","S.RRRRRRRS","S.HSSSKS.S","SSHSSSSSSS","...SSSS
                     "..WBWWBW..","..WBBBBW..","...BBBB...","...BBBB...","..BB..BB..","..BB...BB.",".KKK...KK."]);
 for (const k of Object.keys(SPR)) SPR[k + 'L'] = flipH(SPR[k]);
 // --- nemici sardi: colori leggibili anche per i daltonici (niente verde), contorno nero + alone bianco ---
-// su tiligugu (la lucertola): giallo acceso con strisce blu scuro
-const lizTop = ["..JJJ...........", ".JKJJJJJJJJJJ...", "JJJJbJJbJJbJJJJJ", ".JJJJJJJJJJJJJJb"];
-SPR.liz1 = sprite([...lizTop, "..bJ...bJ.......", ".bb....bb......."]);
-SPR.liz2 = sprite([...lizTop, "...bJ...bJ......", "...bb....bb....."]);
+// sa Merdona (la nutria): pelo marrone, pancia chiara, dentoni arancioni, coda da topo
+const merTop = ["..nn............", ".nnnnnnnnnn.....", "nKnnnnnnnnnnn...", "nnnnnnnnnnnnnn..", "nnnuuuuuuuunnnz.", ".OOuuuuuuuuunn.z"];
+SPR.mer1 = sprite([...merTop, "...nn...nn.....z", "...kk....kk....."]);
+SPR.mer2 = sprite([...merTop, "..nn....nn.....z", "..kk.....kk....."]);
 // su Mamuthone di Mamoiada: maschera scura, muccadore arancio, pelli nere e campanacci d'ottone
 const mamTop = ["...HHHHHH...", "..HHHHHHHH..", "..mmmmmmmm..", "..mLLmmLLm..", "..mmmmmmmm..", "..mmmmmmmm..",
                 "...mmmmmm...", "..OOOOOOOO..", ".kkkkkkkkkk.", "kkzkkzkkzkkk"];
@@ -259,7 +259,7 @@ SPR.park1 = sprite([...parkHead, "...SSSSSS...", "...SKSSKS...", "...SSSSSS...",
 SPR.park2 = sprite([...parkHead, "...SSSSSS..S", "...SKSSKS..S", "...SSSSSS.S.", "....SHHS..S.", "..VVVVVVVVS.",
   ".SVVLLLLVV..", ".SVVVVVVVV..", ".SVLLLLLLV..", "..VVVVVVVV..", "..BBBBBBBB..", "...BB..BB...", "...BB..BB...", "..KKK.KKK..."]);
 const enemySet = (a, b) => { const L = [outlined(a), outlined(b)]; return { L, R: L.map(flipH) }; };
-const ESPR = { liz: enemySet(SPR.liz1, SPR.liz2), mam: enemySet(SPR.mam1, SPR.mam2),
+const ESPR = { mer: enemySet(SPR.mer1, SPR.mer2), mam: enemySet(SPR.mam1, SPR.mam2),
                por: enemySet(SPR.por1, SPR.por2), park: enemySet(SPR.park1, SPR.park2), gull: enemySet(SPR.gull1, SPR.gull2) };
 SPR.seadas = sprite(["..yyyyyyyy..",".yYYOYYYOYy.","yYYYYOOYYYYy","yYOYYYYYYOYy",".yyYYYYYYyy.","...yyyyyy..."]);
 
@@ -623,8 +623,8 @@ const ZONES = [{ name: 'IL POETTO', sub: 'SPIAGGIA E SELLA DEL DIAVOLO' },
 const zoneOf = tx => tx < 76 ? 0 : tx < 151 ? 1 : 2;
 const SOLID = new Set(['#', 'B', '?', '!', 'U', '=']);
 let map, items, enemies;
-// nemici a terra: tiligugu (lucertola), Mamuthone, porcheddu
-const EDEF = { liz: { w: 14, h: 6, v: .45, pts: 100, col: ['#ffe03c', '#1c3270'] },
+// nemici a terra: Merdona (nutria), Mamuthone, porcheddu, parcheggiatore
+const EDEF = { mer: { w: 14, h: 8, v: .45, pts: 100, col: ['#8a5a34', '#d4a66c', '#e87818'] },
                mam: { w: 10, h: 15, v: .3, pts: 200, col: ['#24202c', '#ffe03c', '#e87818'] },
                por: { w: 13, h: 8, v: .5, pts: 200, col: ['#ffb0c8', '#d8708e'] },
                park: { w: 10, h: 15, v: .35, pts: 200, col: ['#dcff3a', '#98a0b8', '#2f56b0'] } };
@@ -637,7 +637,7 @@ function buildLevel() {
   const tes = (x, y, n = 1) => { for (let i = 0; i < n; i++) items.push({ x: (x + i) * T + 4, y: y * T + 4, w: 8, h: 8, got: false }); };
   const foe = (type, x) => { const d = EDEF[type];
     enemies.push({ type, ground: true, x: x * T, y: 10 * T - d.h, w: d.w, h: d.h, vx: -d.v, vy: 0, alive: true, act: false, anim: 0 }); };
-  const liz = x => foe('liz', x), mam = x => foe('mam', x), por = x => foe('por', x), park = x => foe('park', x);
+  const mer = x => foe('mer', x), mam = x => foe('mam', x), por = x => foe('por', x), park = x => foe('park', x);
   const gull = (x, y) => enemies.push({ type: 'gull', x: x * T, y: y * T, baseY: y * T, w: 12, h: 6, vx: -.8, vy: 0, t: 0, alive: true, act: false });
 
   fill(0, 10, LW - 1, 11, '#');
@@ -646,8 +646,8 @@ function buildLevel() {
   // 1 - la partenza
   tes(6, 8, 3);
   put(12, 6, 'B?B?B'); put(14, 2, '!');
-  liz(20); tes(24, 7, 3);
-  park(31); liz(37);
+  mer(20); tes(24, 7, 3);
+  park(31); mer(37);
   // 2 - scalinata
   fill(43, 9, 46, 9, '#'); fill(44, 8, 46, 8, '#'); fill(45, 7, 46, 7, '#');
   tes(47, 5, 3);
@@ -655,18 +655,18 @@ function buildLevel() {
   put(56, 6, '?BB?'); por(58);
   // 3 - piattaforme
   park(62); put(64, 7, '=='); put(67, 4, '===='); tes(67, 3, 4);
-  liz(72); put(79, 7, '=='); tes(79, 6, 2);
+  mer(72); put(79, 7, '=='); tes(79, 6, 2);
   gull(40, 8); gull(66, 7); gull(84, 8);
   put(88, 6, 'B?B'); put(92, 6, 'B?B?B'); put(93, 2, 'B?B');
-  mam(97); tes(99, 6, 5); liz(102); liz(106); mam(114);
+  mam(97); tes(99, 6, 5); mer(102); mer(106); mam(114);
   // checkpoint a CP_TILE
   tes(118, 6, 3); gull(124, 8);
   // 4 - piramide
   fill(128, 9, 135, 9, '#'); fill(129, 8, 134, 8, '#'); fill(130, 7, 133, 7, '#'); tes(130, 5, 4);
-  mam(138); liz(142); por(146);
+  mam(138); mer(142); por(146);
   put(151, 7, '=='); gull(156, 7);
   put(160, 6, '?B?B?'); tes(160, 3, 5);
-  por(165); gull(168, 8); liz(171); mam(176); liz(180);
+  por(165); gull(168, 8); mer(171); mam(176); mer(180);
   // 5 - verso il Duomo
   tes(184, 7, 3);
   put(190, 6, 'B?B'); por(195); put(198, 6, '??'); gull(202, 8); mam(204);
@@ -765,7 +765,7 @@ function burst(x, y, cols, n = 8) {
   for (let i = 0; i < n; i++) parts.push({ x, y, vx: (Math.random() - .5) * 3, vy: -Math.random() * 3 - .5, t: 30 + Math.random() * 15, col: cols[i % cols.length] });
 }
 // fumetto quando un nemico ti prende
-const EMSG = { liz: 'OH NO, UN TILIGUGU!', mam: 'OH NO, UN MAMUTHONE!', por: 'OH NO, UN PORCHEDDU!', park: 'OH NO, UN PARCHEGGIATORE ABUSIVO!', gull: 'OH NO, UN GABBIANO!' };
+const EMSG = { mer: 'OH NO, UNA MERDONA!', mam: 'OH NO, UN MAMUTHONE!', por: 'OH NO, UN PORCHEDDU!', park: 'OH NO, UN PARCHEGGIATORE ABUSIVO!', gull: 'OH NO, UN GABBIANO!' };
 function die(msg) {
   if (P.dead) return;
   P.msg = msg || ''; P.msgX = P.x + P.w / 2; P.msgY = Math.min(P.y, 10 * T - 4);   // se cadi, il fumetto resta a filo strada
