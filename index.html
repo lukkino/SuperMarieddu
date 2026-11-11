@@ -39,12 +39,21 @@
   #tbar{display:flex;gap:6px;pointer-events:auto}
   #tbar button{width:34px;height:30px;padding:0;font:bold 13px monospace;color:#f8e070;background:rgba(27,20,36,.6);border:2px solid #f8e070;border-radius:0;touch-action:none}
   #tbar button.off{color:#777;border-color:#777}
+  /* inserimento nome per la classifica */
+  #namebox{position:absolute;left:0;right:0;top:calc(var(--s) * 100px);display:none;justify-content:center;gap:calc(var(--s) * 4px);line-height:normal;z-index:6}
+  #namebox.on{display:flex}
+  #namebox input{width:calc(var(--s) * 84px);font:bold max(16px, calc(var(--s) * 9px)) monospace;text-transform:uppercase;text-align:center;
+    color:#f8e070;background:#1b1424;border:2px solid #f0c040;border-radius:0;padding:calc(var(--s) * 2px);outline:none}
+  #namebox button{font:bold max(13px, calc(var(--s) * 7px)) monospace;color:#1b1424;background:#f0c040;border:0;border-radius:0;padding:0 calc(var(--s) * 5px)}
+  #namebox button.skip{background:#5a4a6a;color:#ddd}
+  body.naming #touch{display:none}
 </style>
 </head>
 <body>
 <div id="wrap">
   <canvas id="game"></canvas>
   <div id="crt"></div>
+  <form id="namebox" autocomplete="off"><input id="nameIn" maxlength="10" spellcheck="false" autocapitalize="characters" enterkeyhint="done" placeholder="NOME"><button type="submit">OK</button><button type="button" class="skip">SALTA</button></form>
 </div>
 <div id="touch">
   <div id="dpad" class="ctl"><i class="h"></i><i class="v"></i><i class="hub"></i><i class="hub2"></i><b class="al">&lt;</b><b class="ar">&gt;</b><b class="au">^</b><b class="ad">v</b></div>
@@ -72,7 +81,7 @@ function resize() {
   const s = r >= 1 && !touchUI ? Math.floor(r) : r;              // su touch si sfrutta tutto lo schermo
   const w = Math.round(VW * s), h = Math.round(VH * s);
   cv.style.width = w + 'px'; cv.style.height = h + 'px';
-  wrap.style.width = w + 'px'; wrap.style.height = h + 'px';
+  wrap.style.width = w + 'px'; wrap.style.height = h + 'px'; wrap.style.setProperty('--s', s);
   document.body.classList.toggle('portrait', portrait);
   const top = portrait ? Math.max(0, Math.round((availH - h) / 2)) : Math.round((H - h) / 2);
   wrap.style.marginTop = portrait ? top + 'px' : '';
@@ -653,6 +662,46 @@ let parts = [], floats = [], bumps = [];
 const K = { left: 0, right: 0, jump: 0, run: 0 };
 let jumpPressed = false;
 
+// ====================================================================
+//  CLASSIFICA ONLINE (Supabase) - senza configurazione resta locale
+// ====================================================================
+const LB_URL = '';   // es. 'https://abcdefgh.supabase.co'
+const LB_KEY = '';   // chiave pubblica "anon" / "publishable" del progetto
+const lbOnline = !!(LB_URL && LB_KEY);
+let board = [], boardMsg = '', myEntry = null, myRank = 0, titleT = 0, lastName = '';
+try { lastName = localStorage.getItem('monreale-nome') || ''; } catch (e) {}
+const cleanName = str => str.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9 .!-]/g, '').slice(0, 10);
+const lbHead = extra => Object.assign({ apikey: LB_KEY, Authorization: 'Bearer ' + LB_KEY, 'Content-Type': 'application/json' }, extra);
+function localBoard() { try { return JSON.parse(localStorage.getItem('monreale-board')) || []; } catch (e) { return []; } }
+async function loadBoard() {
+  if (!lbOnline) { board = localBoard(); return; }
+  try {
+    const r = await fetch(LB_URL + '/rest/v1/classifica?select=id,nome,punti,vinto&order=punti.desc,creato.asc&limit=10', { headers: lbHead() });
+    if (!r.ok) throw new Error(r.status);
+    board = await r.json(); boardMsg = '';
+  } catch (e) { boardMsg = 'CLASSIFICA NON RAGGIUNGIBILE'; }
+}
+async function submitScore(nome, punti, vinto) {
+  myEntry = { id: 'io' + Date.now(), nome, punti, vinto }; myRank = 0; boardMsg = '';
+  if (!lbOnline) {
+    const b = localBoard(); b.push(myEntry); b.sort((x, y) => y.punti - x.punti);
+    myRank = b.indexOf(myEntry) + 1; board = b.slice(0, 10);
+    try { localStorage.setItem('monreale-board', JSON.stringify(board)); } catch (e) {}
+    return;
+  }
+  boardMsg = 'INVIO IN CORSO...';
+  try {
+    const r = await fetch(LB_URL + '/rest/v1/classifica', { method: 'POST', headers: lbHead({ Prefer: 'return=representation' }),
+      body: JSON.stringify({ nome, punti, vinto }) });
+    if (!r.ok) throw new Error(r.status);
+    myEntry = (await r.json())[0];
+    const c = await fetch(LB_URL + '/rest/v1/classifica?select=id&punti=gt.' + punti, { method: 'HEAD', headers: lbHead({ Prefer: 'count=exact' }) });
+    const m = /\/(\d+)/.exec(c.headers.get('content-range') || '');
+    if (m) myRank = +m[1] + 1;
+    boardMsg = ''; await loadBoard();
+  } catch (e) { boardMsg = 'ERRORE DI RETE: PUNTEGGIO NON SALVATO'; }
+}
+loadBoard();
 function saveHi() { if (score > hi) { hi = score; try { localStorage.setItem('monreale-hi', hi); } catch (e) {} } }
 function resetLevel() {
   buildLevel();
@@ -903,8 +952,22 @@ function hud() {
 function dim(a = .55) { ctx.fillStyle = `rgba(13,10,20,${a})`; ctx.fillRect(0, 0, VW, VH); }
 function box(y, h) { ctx.fillStyle = 'rgba(27,20,36,.85)'; ctx.fillRect(20, y, VW - 40, h); ctx.fillStyle = '#f0c040';
   ctx.fillRect(20, y, VW - 40, 1); ctx.fillRect(20, y + h - 1, VW - 40, 1); ctx.fillRect(20, y, 1, h); ctx.fillRect(VW - 21, y, 1, h); }
+function drawBoard(y, mine) {
+  box(y, 152);
+  ctext(lbOnline ? 'CLASSIFICA' : 'CLASSIFICA LOCALE', y + 7, '#f0c040', 2);
+  if (!board.length) ctext(boardMsg || 'NESSUN PUNTEGGIO ANCORA', y + 66, '#fff');
+  board.forEach((e, i) => {
+    const yy = y + 27 + i * 10, me = mine && myEntry && e.id === myEntry.id;
+    const col = me ? (frame % 30 < 20 ? '#f8e070' : '#ffffff') : i === 0 ? '#f0c040' : i < 3 ? '#9ad0ff' : '#e8e0d0';
+    text(pad(i + 1, 2) + '.', 74, yy, col); text(e.nome, 94, yy, col); text(pad(e.punti, 6), 206, yy, col);
+    if (e.vinto) drawTessera(234, yy - 2, 0);                           // ha raggiunto le torri
+  });
+  if (board.length && boardMsg) ctext(boardMsg, y + 129, '#ff9070');
+  else if (mine && myRank > 10) ctext('LA TUA POSIZIONE: ' + myRank, y + 129, '#f8e070');
+}
 function draw() {
   drawWorld();
+  if (state === 'title' && board.length && (frame - titleT) % 720 >= 420) { dim(.35); drawBoard(20, false); return; }
   if (state === 'title') {
     dim(.35); box(22, 150);
     ctext('MONREALE', 34, '#f0c040', 4);
@@ -931,6 +994,16 @@ function draw() {
     ctext('PUNTI ' + pad(score, 6), 98, '#9ad0ff', 2);
     if (winDone && frame % 60 < 40) ctext(touchUI ? 'TOCCA LO SCHERMO' : 'PREMI INVIO', 124, '#f8e070');
   }
+  if (state === 'name') {
+    dim(.65); box(40, 96);
+    ctext(nameWon ? 'SEI ARRIVATO ALLE TORRI!' : 'GAME OVER', 48, nameWon ? '#f0c040' : '#ff6060', 2);
+    ctext('PUNTI ' + pad(score, 6), 66, '#fff', 2);
+    ctext('SCRIVI IL TUO NOME PER LA CLASSIFICA', 86, '#9ad0ff');
+  }
+  if (state === 'board') {
+    dim(.5); drawBoard(18, true);
+    if (frame % 60 < 40) ctext(touchUI ? 'TOCCA LO SCHERMO' : 'PREMI INVIO', 159, '#f8e070');
+  }
 }
 
 // ====================================================================
@@ -938,10 +1011,28 @@ function draw() {
 // ====================================================================
 const KEYMAP = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', Space: 'jump', ArrowUp: 'jump',
                  KeyW: 'jump', KeyZ: 'jump', ShiftLeft: 'run', ShiftRight: 'run', KeyX: 'run' };
+function toTitle() { state = 'title'; titleT = frame; buildLevel(); loadBoard(); }
+const nameBox = document.getElementById('namebox'), nameIn = document.getElementById('nameIn');
+let nameWon = false;
+function askName(won) {
+  nameWon = won; state = 'name'; for (const k in K) KB[k] = TK[k] = 0; ptrs.clear(); syncTouch();
+  nameIn.value = lastName; nameBox.classList.add('on'); document.body.classList.add('naming');
+  nameIn.focus(); nameIn.select();
+}
+function closeName() { nameBox.classList.remove('on'); document.body.classList.remove('naming'); nameIn.blur(); }
+nameIn.addEventListener('input', () => { const c = cleanName(nameIn.value); if (c !== nameIn.value) nameIn.value = c; });
+nameBox.addEventListener('submit', e => {
+  e.preventDefault();
+  const n = cleanName(nameIn.value).trim(); if (!n) { nameIn.focus(); return; }
+  lastName = n; try { localStorage.setItem('monreale-nome', n); } catch (err) {}
+  closeName(); state = 'board'; submitScore(n, score, nameWon);
+});
+nameBox.querySelector('.skip').addEventListener('click', () => { closeName(); toTitle(); });
 function confirm() {
   initAudio();
   if (state === 'title') newGame();
-  else if (state === 'over' || (state === 'win' && winDone)) { state = 'title'; buildLevel(); }
+  else if (state === 'over' || (state === 'win' && winDone)) { if (score > 0) askName(state === 'win'); else toTitle(); }
+  else if (state === 'board') toTitle();
 }
 function togglePause() {
   if (state === 'play') { state = 'pause'; SFX.pause(); } else if (state === 'pause') { state = 'play'; SFX.pause(); }
@@ -950,6 +1041,7 @@ function togglePause() {
 const KB = { left: 0, right: 0, jump: 0, run: 0 }, TK = { left: 0, right: 0, jump: 0, run: 0 };
 function syncK() { for (const k in K) { const v = KB[k] || TK[k] ? 1 : 0; if (k === 'jump' && v && !K.jump) jumpPressed = true; K[k] = v; } }
 addEventListener('keydown', e => {
+  if (state === 'name') { if (e.code === 'Escape') { closeName(); toTitle(); } return; }  // si sta scrivendo il nome
   initAudio();
   const k = KEYMAP[e.code];
   if (k) { e.preventDefault(); KB[k] = 1; syncK(); }
