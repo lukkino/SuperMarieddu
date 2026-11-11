@@ -410,17 +410,11 @@ const BTN = [8, 6, 3, 6].map(w => mk(8, 8, g => {
 
 // --- Sfondi parallax ---
 const SKY = mk(VW, VH, g => {
-  const cols = ['#283e8c', '#2f52a6', '#3f6cc0', '#5a8ad2', '#80aade', '#a9c8e6', '#d8dcc8', '#f0d8a0'];
+  // cielo uniforme: una sola sfumatura morbida dal blu in alto al celeste chiaro verso l'orizzonte
+  const top = [74, 134, 216], hor = [170, 212, 244];
   for (let y = 0; y < VH; y++) {
-    const i = Math.floor(y / 24), f = y % 24;
-    g.fillStyle = cols[i]; g.fillRect(0, y, VW, 1);
-    if (i < cols.length - 1 && f >= 17) {
-      g.fillStyle = cols[i + 1];
-      for (let x = 0; x < VW; x++) {
-        const on = f >= 21 ? !(x % 2 === 0 && y % 2 === 0) : (x + y) % 2 === 0;
-        if (on) g.fillRect(x, y, 1, 1);
-      }
-    }
+    const k = Math.min(1, y / 150);
+    g.fillStyle = `rgb(${top.map((c, i) => Math.round(c + (hor[i] - c) * k)).join(',')})`; g.fillRect(0, y, VW, 1);
   }
   for (let dy = -18; dy <= 18; dy++) for (let dx = -18; dx <= 18; dx++) {
     const d = Math.hypot(dx, dy);
@@ -465,8 +459,20 @@ const FAR = mk(1304, VH, g => {
   const W = 1304, r = mulberry32(99);
   for (let y = 122; y < VH; y++) { g.fillStyle = y < 125 ? '#2a7ec8' : y < 132 ? '#2a9cc8' : y < 142 ? '#30b6cc' : '#48cad2'; g.fillRect(0, y, W, 1); }
   for (let i = 0; i < 260; i++) { g.fillStyle = r() < .5 ? '#9ae8ec' : '#2a9ac0'; g.fillRect(r() * W | 0, 124 + (r() * 68 | 0), 2 + (r() * 4 | 0), 1); }
-  const cloud = (x, y, w) => { g.fillStyle = '#ffffff'; g.fillRect(x + 5, y, w - 10, 4); g.fillRect(x, y + 4, w, 5);
-    g.fillStyle = '#c8dcf0'; g.fillRect(x + 2, y + 9, w - 4, 2); };
+  // nuvole a batuffolo: bolle tonde con il fondo piatto, luce in alto a sinistra e ombra azzurrina in basso
+  const cloud = (x, y, w) => {
+    const cr = mulberry32(x * 13 + w), base = y + Math.round(w * .42), n = Math.max(3, Math.round(w / 11)), blobs = [];
+    for (let i = 0; i < n; i++) { const t = (i + .5) / n, rr = (w / n) * (.75 + Math.sin(t * Math.PI) * .9) * (.9 + cr() * .25);
+      blobs.push([x + t * w, base - rr * .55, rr]); }
+    const inside = (a, b) => b <= base && blobs.some(([bx, by, br]) => (a - bx) ** 2 + (b - by) ** 2 <= br * br);
+    for (let yy = y - 22; yy <= base + 1; yy++) for (let xx = x - 12; xx <= x + w + 12; xx++) {
+      const a = xx + .5, b = yy + .5;
+      if (inside(a, b)) g.fillStyle = !inside(a + 2, b + 2) || b > base - 2 ? '#c4d8f0' : !inside(a - 1, b - 2) ? '#ffffff' : '#eef4fb';
+      else if (inside(a + 1, b) || inside(a - 1, b) || inside(a, b + 1) || inside(a, b - 1)) g.fillStyle = '#8fb6e2';
+      else continue;
+      g.fillRect(xx, yy, 1, 1);
+    }
+  };
   cloud(30, 28, 40); cloud(180, 52, 28); cloud(330, 20, 52); cloud(500, 44, 34); cloud(640, 30, 40); cloud(800, 46, 36); cloud(930, 24, 48); cloud(1080, 40, 40); cloud(1220, 26, 44);
   const top = x => { const k = clamp01((x - 270) / 110); if (k <= 0) return null;
     return Math.round(160 - (160 - (114 + 6 * Math.sin(TAU * x * 2 / W) + 4 * Math.sin(TAU * x * 5 / W + 1))) * k); };
