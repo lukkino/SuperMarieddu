@@ -1212,6 +1212,19 @@ function drawFlag(cx, tile) {   // bandiera dei Quattro Mori
     }
   }
 }
+// cartello all'ingresso di Pirri: località (bianco, bordo nero) + indicazione turistica (marrone)
+const SIGN_TX = 455;
+function drawSign(cx) {
+  const sx = SIGN_TX * T - cx, w = 84;
+  if (sx < -w || sx > VW) return;
+  const box2 = (x, y, bw, bh, bg, border) => { ctx.fillStyle = border; ctx.fillRect(x, y, bw, bh); ctx.fillStyle = bg; ctx.fillRect(x + 2, y + 2, bw - 4, bh - 4); };
+  ctx.fillStyle = '#6a6a74'; ctx.fillRect(sx + 12, 104, 2, 56); ctx.fillRect(sx + w - 14, 104, 2, 56);   // pali
+  ctx.fillStyle = '#9a9aa4'; ctx.fillRect(sx + 12, 104, 1, 56); ctx.fillRect(sx + w - 14, 104, 1, 56);
+  box2(sx + 17, 100, 50, 20, '#ffffff', '#1b1424');                                                 // PIRRI
+  text('PIRRI', sx + 23, 105, '#1b1424', 2, null);
+  box2(sx, 123, w, 13, '#7a4a28', '#ffffff');                                                       // TORRI DI MONREALE >
+  text('TORRI DI MONREALE >', sx + 5, 127, '#ffffff', 1, null);
+}
 function drawWorld() {
   const cx = Math.round(camX);
   ctx.drawImage(SKY, 0, 0);
@@ -1236,6 +1249,7 @@ function drawWorld() {
     ctx.drawImage(img, tx * T - cx, ty * T - bo);
   }
   for (const c of CPS) drawFlag(cx, c);
+  drawSign(cx);
   const tf = Math.floor(frame / 7) % 4;
   for (const it of items) if (!it.got && it.x - cx > -10 && it.x - cx < VW) drawTessera(it.x - cx, it.y + Math.round(Math.sin(frame * .08 + it.x) * 1), tf);
   for (const e of enemies) {
