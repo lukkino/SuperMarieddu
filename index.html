@@ -203,7 +203,8 @@ function mk(w, h, fn) { const c = document.createElement('canvas'); c.width = w;
 function flipH(img) { return mk(img.width, img.height, g => { g.translate(img.width, 0); g.scale(-1, 1); g.drawImage(img, 0, 0); }); }
 const PAL = {
   K:'#1b1424', R:'#d4382c', r:'#8a1e22', S:'#f2b98a', H:'#5a2e1a', W:'#f4ecd8', B:'#2f56b0', b:'#1c3270',
-  G:'#5cb03c', g:'#2e6a26', Y:'#f0c040', y:'#a8701c', O:'#e87818', L:'#98a0b8'
+  G:'#5cb03c', g:'#2e6a26', Y:'#f0c040', y:'#a8701c', O:'#e87818', L:'#98a0b8',
+  J:'#ffe03c', P:'#ffb0c8', p:'#d8708e', m:'#2a1a14', k:'#24202c', z:'#6a6478'
 };
 function sprite(rows) {
   return mk(rows[0].length, rows.length, g => rows.forEach((row, y) => [...row].forEach((ch, x) => {
@@ -219,11 +220,40 @@ SPR.walk2 = sprite([...pTop, "....BBB...", "....BB....", "....KKK..."]);
 SPR.jump  = sprite(["S..RRRR..S","S.RRRRRRRS","S.HSSSKS.S","SSHSSSSSSS","...SSSS...","..WWWWWW..",
                     "..WBWWBW..","..WBBBBW..","...BBBB...","...BBBB...","..BB..BB..","..BB...BB.",".KKK...KK."]);
 for (const k of Object.keys(SPR)) SPR[k + 'L'] = flipH(SPR[k]);
-SPR.liz1 = sprite([".GGG..........","GKGGGGGGGGG...",".GGGgGgGgGGGGG","..gG..gG....GG","..g...g......."]);
-SPR.liz2 = sprite([".GGG..........","GKGGGGGGGGG...",".GGGgGgGgGGGGG","...Gg..Gg...GG","...g....g....."]);
-SPR.liz1R = flipH(SPR.liz1); SPR.liz2R = flipH(SPR.liz2);
+// --- nemici sardi: colori leggibili anche per i daltonici (niente verde), contorno nero + alone bianco ---
+// su tiligugu (la lucertola): giallo acceso con strisce blu scuro
+const lizTop = ["..JJJ...........", ".JKJJJJJJJJJJ...", "JJJJbJJbJJbJJJJJ", ".JJJJJJJJJJJJJJb"];
+SPR.liz1 = sprite([...lizTop, "..bJ...bJ.......", ".bb....bb......."]);
+SPR.liz2 = sprite([...lizTop, "...bJ...bJ......", "...bb....bb....."]);
+// su Mamuthone di Mamoiada: maschera scura, muccadore arancio, pelli nere e campanacci d'ottone
+const mamTop = ["...HHHHHH...", "..HHHHHHHH..", "..mmmmmmmm..", "..mLLmmLLm..", "..mmmmmmmm..", "..mmmmmmmm..",
+                "...mmmmmm...", "..OOOOOOOO..", ".kkkkkkkkkk.", "kkzkkzkkzkkk"];
+SPR.mam1 = sprite([...mamTop, "kJJkJJkJJkJk", "kJJkJJkJJkk.", ".kkzkkkzkkk.", "..kk....kk..", "..KK....KK..", ".KKK...KKK.."]);
+SPR.mam2 = sprite([...mamTop, "JkJJkJJkJJkk", ".kJJkJJkJJkk", ".kkzkkkzkkk.", "...kk..kk...", "...KK..KK...", "..KKK.KKK..."]);
+// su porcheddu: rosa chiaro, ti carica quando ti vede
+const porTop = ["...pp.........", "..pPPp........", ".PPPPPPPPPPP..", "PPKPPPPPPPPPP.", "pPPPPPPPPPPPPp", "pPPPPPPPPPPPp.", ".PPPPPPPPPPPP."];
+SPR.por1 = sprite([...porTop, "..pP...Pp.Pp..", "..H....H..H..."]);
+SPR.por2 = sprite([...porTop, "...pP.Pp...pP.", "...H..H.....H."]);
 SPR.gull1 = sprite(["..W.....W...","..WW...WW...","...WWWWW....","OKWWWWWWWL..","..WWWWWL....","....LL......"]);
 SPR.gull2 = sprite(["............","............","...WWWWW....","OKWWWWWWWL..","..WWWWWL....",".WW.LL..WW.."]);
+// contorno: nero attaccato al corpo, poi alone bianco -> si stacca da qualunque sfondo
+function outlined(img) {
+  const iw = img.width, ih = img.height, a = img.getContext('2d').getImageData(0, 0, iw, ih).data;
+  const on = (x, y) => x >= 0 && y >= 0 && x < iw && y < ih && a[(y * iw + x) * 4 + 3] > 0;
+  return mk(iw + 4, ih + 4, g => {
+    for (let y = -2; y < ih + 2; y++) for (let x = -2; x < iw + 2; x++) {
+      if (on(x, y)) continue;
+      let n1 = false, n2 = false;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (on(x + dx, y + dy)) {
+        if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1) n1 = true; else n2 = true; }
+      if (n1 || n2) { g.fillStyle = n1 ? '#000000' : '#ffffff'; g.fillRect(x + 2, y + 2, 1, 1); }
+    }
+    g.drawImage(img, 2, 2);
+  });
+}
+const enemySet = (a, b) => { const L = [outlined(a), outlined(b)]; return { L, R: L.map(flipH) }; };
+const ESPR = { liz: enemySet(SPR.liz1, SPR.liz2), mam: enemySet(SPR.mam1, SPR.mam2),
+               por: enemySet(SPR.por1, SPR.por2), gull: enemySet(SPR.gull1, SPR.gull2) };
 SPR.seadas = sprite(["..yyyyyyyy..",".yYYOYYYOYy.","yYYYYOOYYYYy","yYOYYYYYYOYy",".yyYYYYYYyy.","...yyyyyy..."]);
 
 const px = (g, x, y, c) => { g.fillStyle = c; g.fillRect(x, y, 1, 1); };
@@ -586,6 +616,10 @@ const ZONES = [{ name: 'IL POETTO', sub: 'SPIAGGIA E SELLA DEL DIAVOLO' },
 const zoneOf = tx => tx < 76 ? 0 : tx < 151 ? 1 : 2;
 const SOLID = new Set(['#', 'B', '?', '!', 'U', '=']);
 let map, items, enemies;
+// nemici a terra: tiligugu (lucertola), Mamuthone, porcheddu
+const EDEF = { liz: { w: 14, h: 6, v: .45, pts: 100, col: ['#ffe03c', '#1c3270'] },
+               mam: { w: 10, h: 15, v: .3, pts: 200, col: ['#24202c', '#ffe03c', '#e87818'] },
+               por: { w: 13, h: 8, v: .5, pts: 200, col: ['#ffb0c8', '#d8708e'] } };
 
 function buildLevel() {
   map = [...Array(LH)].map(() => Array(LW).fill('.'));
@@ -593,7 +627,9 @@ function buildLevel() {
   const fill = (x0, y0, x1, y1, c) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) map[y][x] = c; };
   const put = (x, y, s) => { for (let i = 0; i < s.length; i++) map[y][x + i] = s[i]; };
   const tes = (x, y, n = 1) => { for (let i = 0; i < n; i++) items.push({ x: (x + i) * T + 4, y: y * T + 4, w: 8, h: 8, got: false }); };
-  const liz = x => enemies.push({ type: 'liz', x: x * T, y: 10 * T - 5, w: 14, h: 5, vx: -.45, vy: 0, alive: true, act: false, anim: 0 });
+  const foe = (type, x) => { const d = EDEF[type];
+    enemies.push({ type, ground: true, x: x * T, y: 10 * T - d.h, w: d.w, h: d.h, vx: -d.v, vy: 0, alive: true, act: false, anim: 0 }); };
+  const liz = x => foe('liz', x), mam = x => foe('mam', x), por = x => foe('por', x);
   const gull = (x, y) => enemies.push({ type: 'gull', x: x * T, y: y * T, baseY: y * T, w: 12, h: 6, vx: -.8, vy: 0, t: 0, alive: true, act: false });
 
   fill(0, 10, LW - 1, 11, '#');
@@ -608,24 +644,24 @@ function buildLevel() {
   fill(43, 9, 46, 9, '#'); fill(44, 8, 46, 8, '#'); fill(45, 7, 46, 7, '#');
   tes(47, 5, 3);
   fill(50, 7, 51, 9, '#'); fill(52, 8, 52, 9, '#'); fill(53, 9, 53, 9, '#');
-  put(56, 6, '?BB?'); liz(58);
+  put(56, 6, '?BB?'); por(58);
   // 3 - piattaforme
   put(62, 9, 'C'); put(64, 7, '=='); put(67, 4, '===='); tes(67, 3, 4);
   liz(72); put(79, 7, '=='); tes(79, 6, 2);
   gull(40, 8); gull(66, 7); gull(84, 8);
   put(88, 6, 'B?B'); put(92, 6, 'B?B?B'); put(93, 2, 'B?B');
-  liz(97); tes(99, 6, 5); put(101, 9, 'C'); liz(106);
+  mam(97); tes(99, 6, 5); put(101, 9, 'C'); liz(106); mam(114);
   // checkpoint a CP_TILE
   tes(118, 6, 3); gull(124, 8);
   // 4 - piramide
   fill(128, 9, 135, 9, '#'); fill(129, 8, 134, 8, '#'); fill(130, 7, 133, 7, '#'); tes(130, 5, 4);
-  liz(138); put(141, 9, 'C'); liz(146);
+  mam(138); put(141, 9, 'C'); por(146);
   put(151, 7, '=='); gull(156, 7);
   put(160, 6, '?B?B?'); tes(160, 3, 5);
-  gull(168, 8); put(171, 9, 'C'); liz(176); liz(180);
+  por(165); gull(168, 8); put(171, 9, 'C'); mam(176); liz(180);
   // 5 - verso il Duomo
   tes(184, 7, 3);
-  put(190, 6, 'B?B'); liz(195); put(198, 6, '??'); gull(202, 8); liz(204);
+  put(190, 6, 'B?B'); por(195); put(198, 6, '??'); gull(202, 8); mam(204);
   tes(205, 8, 5);
 }
 const tileAt = (tx, ty) => (tx < 0 || tx >= LW) ? '#' : (ty < 0 || ty >= LH) ? '.' : map[ty][tx];
@@ -735,12 +771,13 @@ function hitBlock(tx, ty) {
       floats.push({ x: tx * T - 8, y: ty * T - 14, t: 80, s: '+1 VITA', col: '#7cf07c' }); }
   } else if (c === 'B' || c === 'U') { bumps.push({ tx, ty, t: 10 }); SFX.bump(); }
   // i nemici sopra il blocco vengono sbalzati via
-  for (const e of enemies) if (e.alive && e.type === 'liz' && e.x + e.w > tx * T && e.x < tx * T + T && Math.abs(e.y + e.h - ty * T) < 2) kill(e, true);
+  for (const e of enemies) if (e.alive && e.ground && e.x + e.w > tx * T && e.x < tx * T + T && Math.abs(e.y + e.h - ty * T) < 2) kill(e, true);
 }
 function kill(e, flip) {
   e.alive = false; e.dt = flip || e.type === 'gull' ? 60 : 30; e.flip = flip || e.type === 'gull'; e.vy = e.flip ? -3 : 0;
-  score += 100; floats.push({ x: e.x, y: e.y - 6, t: 40, s: '100', col: '#fff' });
-  burst(e.x + e.w / 2, e.y, e.type === 'liz' ? ['#5cb03c', '#2e6a26'] : ['#f4ecd8', '#98a0b8'], 6);
+  const d = EDEF[e.type], pts = d ? d.pts : 100;
+  score += pts; floats.push({ x: e.x, y: e.y - 6, t: 40, s: String(pts), col: '#fff' });
+  burst(e.x + e.w / 2, e.y, d ? d.col : ['#f4ecd8', '#98a0b8'], 6);
 }
 
 // ====================================================================
@@ -793,7 +830,12 @@ function updatePlay() {
   for (const e of enemies) {
     if (!e.act) { if (e.x < camX + VW + 24) e.act = true; else continue; }
     if (!e.alive) { e.dt--; if (e.flip) { e.vy += .3; e.y += e.vy; } continue; }
-    if (e.type === 'liz') {
+    if (e.ground) {
+      if (e.type === 'por') {                                     // su porcheddu carica se ti vede vicino
+        const dx = (P.x + P.w / 2) - (e.x + e.w / 2), near = !P.dead && Math.abs(dx) < 120 && Math.abs(P.y + P.h - e.y - e.h) < 20;
+        e.vx = near ? Math.sign(dx) * 1.4 : Math.sign(e.vx || -1) * .5;
+        if (near) e.anim += .15;
+      }
       e.vy = Math.min(e.vy + .35, 6);
       e.x += e.vx; if (collideX(e)) e.vx = -e.vx;
       e.y += e.vy; const og = collideY(e) === 1; if (og) e.vy = 0;
@@ -802,7 +844,7 @@ function updatePlay() {
         if (!solidAt(fx, e.y + e.h + 2) || tileAt(Math.floor(fx / T), Math.floor((e.y + 2) / T)) === 'C') e.vx = -e.vx;
       }
       if (e.y > VH + 20) e.gone = true;
-      e.anim += .12;
+      e.anim += e.type === 'mam' ? .08 : .12;
     } else {
       e.t++; e.x += e.vx; e.y = e.baseY + Math.sin(e.t * .06) * 14;
       if (e.x < camX - 40) e.gone = true;
@@ -912,16 +954,13 @@ function drawWorld() {
   for (const e of enemies) {
     if (!e.act) continue;
     const ex = Math.round(e.x - cx), ey = Math.round(e.y);
-    if (e.type === 'liz') {
-      const img = (Math.floor(e.anim) % 2 ? (e.vx > 0 ? SPR.liz2R : SPR.liz2) : (e.vx > 0 ? SPR.liz1R : SPR.liz1));
-      if (e.alive) ctx.drawImage(img, ex, ey);
-      else if (e.flip) { ctx.save(); ctx.translate(ex, ey + 5); ctx.scale(1, -1); ctx.drawImage(img, 0, 0); ctx.restore(); }
-      else ctx.drawImage(img, ex, ey + 3, 14, 2);
-    } else {
-      const img = Math.floor(e.t / 10) % 2 ? SPR.gull1 : SPR.gull2;
-      if (e.alive) ctx.drawImage(img, ex, ey - 2);
-      else { ctx.save(); ctx.translate(ex, ey + 4); ctx.scale(1, -1); ctx.drawImage(img, 0, 0); ctx.restore(); }
-    }
+    const set = ESPR[e.type][e.vx > 0 ? 'R' : 'L'];
+    const img = set[(e.ground ? Math.floor(e.anim) : Math.floor(e.t / 10)) % 2];
+    const dx = Math.round(e.x + e.w / 2 - img.width / 2 - cx);
+    const dy = e.ground ? Math.round(e.y + e.h - img.height + 2) : ey - 4;
+    if (e.alive) ctx.drawImage(img, dx, dy);
+    else if (e.flip) { ctx.save(); ctx.translate(dx, dy + img.height); ctx.scale(1, -1); ctx.drawImage(img, 0, 0); ctx.restore(); }
+    else ctx.drawImage(img, dx, Math.round(e.y + e.h) - 4, img.width, 6);   // schiacciato
   }
   if (state !== 'title' && !(P.dead && P.deadT > 100 && P.y > VH)) {
     let img;
