@@ -66,6 +66,7 @@
 // ====================================================================
 //  COSTANTI / CANVAS
 // ====================================================================
+const VERSION = '1.0.0';
 const VW = 320, VH = 192, T = 16;
 const cv = document.getElementById('game'), ctx = cv.getContext('2d');
 const wrap = document.getElementById('wrap'), crt = document.getElementById('crt');
@@ -1034,6 +1035,7 @@ function draw() {
     else { ctext('FRECCE/WASD: MUOVI   SPAZIO: SALTA   SHIFT: CORRI', 108, '#c8b07a'); ctext('P: PAUSA   M: MUSICA   C: EFFETTO CRT', 118, '#c8b07a'); }
     if (frame % 60 < 40) ctext(touchUI ? 'TOCCA LO SCHERMO PER INIZIARE' : 'PREMI INVIO PER INIZIARE', 138, '#f8e070', 1);
     ctext('RECORD ' + pad(hi, 6), 156, '#7cf07c');
+    text('V' + VERSION, VW - 26 - textW('V' + VERSION), 164, '#8a7ca0');   // versione nell'angolo del riquadro
     return;
   }
   hud();
