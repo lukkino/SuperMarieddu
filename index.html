@@ -205,7 +205,7 @@ function flipH(img) { return mk(img.width, img.height, g => { g.translate(img.wi
 const PAL = {
   K:'#1b1424', R:'#d4382c', r:'#8a1e22', S:'#f2b98a', H:'#5a2e1a', W:'#f4ecd8', B:'#2f56b0', b:'#1c3270',
   G:'#5cb03c', g:'#2e6a26', Y:'#f0c040', y:'#a8701c', O:'#e87818', L:'#98a0b8',
-  V:'#dcff3a', J:'#ffe03c', n:'#8a5a34', u:'#d4a66c', P:'#ffb0c8', p:'#d8708e', m:'#2a1a14', k:'#24202c', z:'#6a6478', q:'#c87ae0', Q:'#7a3a9a'
+  V:'#dcff3a', J:'#ffe03c', n:'#8a5a34', u:'#d4a66c', P:'#ffb0c8', p:'#d8708e', m:'#2a1a14', k:'#24202c', z:'#6a6478', q:'#c87ae0', Q:'#7a3a9a', c:'#3a8ef0', e:'#1e9a8a'
 };
 function sprite(rows) {
   return mk(rows[0].length, rows.length, g => rows.forEach((row, y) => [...row].forEach((ch, x) => {
@@ -267,10 +267,27 @@ SPR.gra2 = sprite(["OO..........OO", "OOO..W..W..OOO", ".OO..K..K..OO.", "..O.OO
 const polTop = ["...qqqqqq...", "..qqqqqqqq..", ".qqqqqqqqqq.", ".qWKqqqqWKq.", ".qqqqqqqqqq.", ".qqQqqqqQqq.", "..qqqqqqqq.."];
 SPR.pol1 = sprite([...polTop, ".qQq.qq.qQq.", "q..q.qq.q..q", "q.q..q.q..q."]);
 SPR.pol2 = sprite([...polTop, "qQ.q.qq.q.Qq", ".q.q.qq.q.q.", "..q.q..q.q.."]);
+// su pavone di Monte Urpinu: blu acceso, coda verde-azzurra con gli occhi d'oro; se ti avvicini fa la ruota
+const pavTop = [".c..................", "ccc.................", "OcKc................", "..cc................", "..cc................",
+                "..ccc...............", "..cccceeeeeeeeee....", "..ccccceeYeeeYeeeee.", "...cccceeeeeeeeeeee.", "....cc..eeeeeeee...."];
+SPR.pav1 = sprite([...pavTop, "....H...H...........", "...HH..HH..........."]);
+SPR.pav2 = sprite([...pavTop, ".....H.H............", "....HH.HH..........."]);
+SPR.pavFan = mk(19, 17, g => {
+  for (let y = 0; y < 17; y++) for (let x = 0; x < 19; x++) {
+    const dx = x - 9, dy = y - 15, d = Math.hypot(dx, dy);
+    if (d <= 9.5 && dy <= 0) { g.fillStyle = (Math.round(Math.atan2(dy, dx) * 5) % 2) ? '#1e9a8a' : '#2a7a6a'; g.fillRect(x, y, 1, 1); }
+  }
+  for (let k = 0; k <= 8; k++) { const a = -Math.PI + k * Math.PI / 8, ex = Math.round(9 + 7.2 * Math.cos(a)), ey = Math.round(15 + 7.2 * Math.sin(a));
+    g.fillStyle = '#f0c040'; g.fillRect(ex - 1, ey - 1, 2, 2); g.fillStyle = '#3a8ef0'; g.fillRect(ex, ey, 1, 1); }
+  g.fillStyle = '#3a8ef0'; g.fillRect(7, 9, 5, 6); g.fillRect(8, 5, 3, 4); g.fillRect(9, 3, 1, 2);
+  g.fillStyle = '#1b1424'; g.fillRect(8, 6, 1, 1); g.fillStyle = '#e87818'; g.fillRect(7, 7, 1, 1);
+  g.fillStyle = '#5a2e1a'; g.fillRect(8, 15, 1, 2); g.fillRect(10, 15, 1, 2);
+});
 const enemySet = (a, b) => { const L = [outlined(a), outlined(b)]; return { L, R: L.map(flipH) }; };
 const ESPR = { mer: enemySet(SPR.mer1, SPR.mer2), mam: enemySet(SPR.mam1, SPR.mam2),
                por: enemySet(SPR.por1, SPR.por2), park: enemySet(SPR.park1, SPR.park2),
-               gra: enemySet(SPR.gra1, SPR.gra2), pol: enemySet(SPR.pol1, SPR.pol2), gull: enemySet(SPR.gull1, SPR.gull2) };
+               gra: enemySet(SPR.gra1, SPR.gra2), pol: enemySet(SPR.pol1, SPR.pol2),
+               pav: enemySet(SPR.pav1, SPR.pav2), pavFan: (() => { const f = outlined(SPR.pavFan); return { L: [f, f], R: [flipH(f), flipH(f)] }; })(), gull: enemySet(SPR.gull1, SPR.gull2) };
 SPR.seadas = sprite(["..yyyyyyyy..",".yYYOYYYOYy.","yYYYYOOYYYYy","yYOYYYYYYOYy",".yyYYYYYYyy.","...yyyyyy..."]);
 
 const px = (g, x, y, c) => { g.fillStyle = c; g.fillRect(x, y, 1, 1); };
@@ -368,6 +385,12 @@ TILE.mkt = mk(16, 16, g => { g.fillStyle = '#c8c4bc'; g.fillRect(0, 0, 16, 16);
 TILE.mktTop = mk(16, 16, g => { g.drawImage(TILE.mkt, 0, 0);
   g.fillStyle = '#5a5a64'; g.fillRect(0, 0, 16, 3); g.fillStyle = '#f0c040'; g.fillRect(0, 1, 16, 1);
   for (let x = 0; x < 16; x += 4) { g.fillStyle = '#1b1424'; g.fillRect(x, 1, 2, 1); } });
+// Monte Urpinu: sentiero di terra con gli aghi di pino
+TILE.pine = mk(16, 16, g => { g.fillStyle = '#9a6e44'; g.fillRect(0, 0, 16, 16);
+  for (let i = 0; i < 30; i++) px(g, rnd() * 16 | 0, rnd() * 16 | 0, rnd() < .5 ? '#80583a' : '#b08458'); });
+TILE.pineTop = mk(16, 16, g => { g.drawImage(TILE.pine, 0, 0);
+  g.fillStyle = '#d4bc8a'; g.fillRect(0, 0, 16, 3); g.fillStyle = '#ecdcb0'; g.fillRect(0, 0, 16, 1);
+  for (let i = 0; i < 6; i++) { const x = rnd() * 14 | 0, y = rnd() * 3 | 0; g.fillStyle = '#7a5030'; g.fillRect(x, y, 2, 1); } });
 // riccio di mare (al posto del fico d'india sulla spiaggia)
 TILE.urchin = mk(16, 16, g => {
   for (let a = 0; a <= 16; a++) { const an = Math.PI + a / 16 * Math.PI;
@@ -438,13 +461,13 @@ const PASTEL = [['#e4dccc', '#d8c8b8', '#ecd8b8', '#e0d0d0'], ['#f0e0b0', '#f2cc
                 ['#f4d070', '#e89c84', '#f6f0e0', '#e8c890', '#f4b8a0', '#c8d8a0']];
 
 // --- FAR (parallax .12): Golfo degli Angeli, Sette Fratelli, la città che sale ---
-const FAR = mk(1160, VH, g => {
-  const W = 1160, r = mulberry32(99);
+const FAR = mk(1304, VH, g => {
+  const W = 1304, r = mulberry32(99);
   for (let y = 122; y < VH; y++) { g.fillStyle = y < 125 ? '#2a7ec8' : y < 132 ? '#2a9cc8' : y < 142 ? '#30b6cc' : '#48cad2'; g.fillRect(0, y, W, 1); }
   for (let i = 0; i < 260; i++) { g.fillStyle = r() < .5 ? '#9ae8ec' : '#2a9ac0'; g.fillRect(r() * W | 0, 124 + (r() * 68 | 0), 2 + (r() * 4 | 0), 1); }
   const cloud = (x, y, w) => { g.fillStyle = '#ffffff'; g.fillRect(x + 5, y, w - 10, 4); g.fillRect(x, y + 4, w, 5);
     g.fillStyle = '#c8dcf0'; g.fillRect(x + 2, y + 9, w - 4, 2); };
-  cloud(30, 28, 40); cloud(180, 52, 28); cloud(330, 20, 52); cloud(500, 44, 34); cloud(640, 30, 40); cloud(800, 46, 36); cloud(930, 24, 48); cloud(1080, 40, 40);
+  cloud(30, 28, 40); cloud(180, 52, 28); cloud(330, 20, 52); cloud(500, 44, 34); cloud(640, 30, 40); cloud(800, 46, 36); cloud(930, 24, 48); cloud(1080, 40, 40); cloud(1220, 26, 44);
   const top = x => { const k = clamp01((x - 270) / 110); if (k <= 0) return null;
     return Math.round(160 - (160 - (114 + 6 * Math.sin(TAU * x * 2 / W) + 4 * Math.sin(TAU * x * 5 / W + 1))) * k); };
   for (let x = 270; x < W; x++) { const t = top(x); if (t !== null) { g.fillStyle = '#b4bccc'; g.fillRect(x, t - 6, 1, VH - t + 6); } }
@@ -493,7 +516,7 @@ function drawTower(g, x, base, w, h, o) {
 // Sella del Diavolo: classi di terreno ricavate dalla foto (r/R roccia, f/F bosco, s macchia, b barche), RLE per riga
 const SELLA = '.242r13.4r3.42|.243r12.49|.243r14.37r8.1r1|.241r15.36r2R4r1R3r2|.228r1.9r3R4r7R1r6.1r3.11r1.7r10R12|.209r1.5r3R1r21R7f1R8r2s3r24R10f4R5|.205r10R14r1R1r7R11f2R4r1R1r1s4R2r1R4r2R3r2R27f1|.196r4.2r2R2r1R1r4R7f2R11s3R6f1R5f1R12r3R3f1R7r2R1f1R3f1R3f1R1r1R5f2R5r2s1f1|.195r2F2r3R16f2R2f1R2f1R10f1R1r1R1f3R6f2R2r1R6r3R1f1R9r1R2f2R2f1R2f2R9r1R5r1s1R1|.182r14R1F2R3f2R11f1R2f2R4f1R4f1R6f2R7f4R4r2R2F1R3r2R18f1R12r2R2r1R3r1R1|.180R3r1R1s8R3f2R4f1R15f1R10f1R3f1R12f1R6r1R2r2f1R2r2R2f5R2f1R2r2R1r1R1f2R3f5R7f1R1r1R4|.177R10r2s5F2R20f1R1f1R9f4R24r3R3F1R2f9R5f7R1f4R8r1R2f2|.175r1f1R10r1R9f2R5f1R11f1R11f6R8f3R13s1F5R1f10R2f3R1f1R5f3R12f2|.174R28f2R25f2R2f1R7f14R3s2F5f7R2f1R2f2R10f8R5f2|.173R15f5R1f1R15f2R14r1R6f1R2r5R1f4R3f6R3r1R3F2f7R6f2R11f9R5|.173R21f1R13f7R2f1R3r1R6r1R6r5R10f1R2f2R4r3f2R2f11R1f2R3r1R7f2R2f5R1f3|.172R13r1R8f1R1f1R6f1R4f10R4r1R12r5R15r1R2r3R2f3R3f7F1R1f2R2r2R7f13|.172R1f2R6r1R12f1R7f3R2f3R2f7R3r2R7r2R1r6R15r2R3r3R4f1R3F1f5R1f2R2r2R6F2f12|.172R7f2R13f1R4f7R1f2R4f6R10r1R1r1R1r7R26r1R4F2f7R3r1R5F1f1F2f7R1f3|.171r1R7f1R9f1R4f1R3f8R8f4R4r1R6r1R1r1R1r8R11r1R2r1R6f1R2r2R3f1F2f7R7f4F2f10R1|.171R22f2R3f8R3f1R4f3R13r11R1r2R6f1R11f3R6F2f8R1f12R2f2R2f1R2s1|.170r1R6f1R1r1R13f1R2f11R1f2R5f1R14r2R2r7R13f1R7f2R3F1f2R1f1F2f7F2f9R1f4F2f3R1F1|.170R2f1R5r2R2f2R6f2R4f1R5f3R15r2R8r3R1r4R13f4R6f1R2F4f4F2f7F2f9r1R4F3f1F3|.102r3.63r1R2f4R2r2R2f7R1f2R40r2R1f2R3f1R6f10R1f1R3F6f2R2f3R2f6F2R2f6R5f1F5f1|.102r6.59r1R2f4R1f1R1r1R2f11R1f4R6f3R13f1R2r1R1r2R1f1R6f9R1f13R1f8F2R4f4F1f6F2f8R4f3F2f3|.101R2r3R1r3.56r1R3f4R4f9R3f1R1f1R1f1R7f7R14r2R6f8R1f27R4F1f16R5f3R1f1R1F3f2|.101R3r1R3s1r2.55r1R3f11R1f7R1f5R7f8R10f1R7f34R4f7R3f12F2s3F1f2R1f1F6|.102R3f1R1r1s2R1r1.53r1R3f10F2R1f3R1f3R1f4R8f9R6f9R1f28R10s4F6R1s1R1f6R3F3s3F11|.101r1R2r1f2r1s3r2.51r1R4f9F1f1F1R1f10R5f32R2F1f19R1s6F5s6f2F5s1R1f3R1F2R2F18|.101R4f1R2s4r2.50R4f10F3R2f13R1f32R1F2f18R1s5F6s2F1s3F3s1F2s1F2f5F22|.101R3f2R1r1s4R1r2.46r1.1R3f13F2f49F2f1F2f11F2R1f1F2s4F2s7f3F2s3F1s2f5F9f2F3R1f3F5|.99R2f1R2f2R3s4F1r1.45r3R2f14F2f49F2f1F2f6s4F10s9F1f1F1s5R1F1s1f3R2f2F11f1F1f5F4|.93r3R5f1R2f2R1r2R1s4r2.42r3R1r1R1f8R3f55F2f1F3f2F5s1f2F2f3F4s17R1f3s4R1f4F3f1R1f1F2f10F1|.92r4f2R1f3R5r1R3s4r1.40r4R1f1R1f8R2F1R1f59F4s2F4f1s3F1f4F1s12F3s2F2f2s2F4f5F2f4F3f4F2f2F1|.91r1R2r1f8R10s2r2.37r3F2R2f10R2f10R1f50F2s7F3s1F2f1F3s11F8f1F2s3F1s1R1f5F3f3F3f5F3f1|.90r1R3f9R11s2r2.34r3R2F3f20F1f28R1f3F1f18F3s3R1s3F9s9F2s3F3s1F1f2F1s7R1f5F9f6R1F1f1|.90r1R2f5R1f6R4r1R1f3s3r2.30r5R2F1s2F1f4R1f6R1f7F3f27R1f2F2f17F5R2f2F3f1F1s3F5s7F1s4f2F4s4F2s2F2f2F2f1F8f10|.87r2R1f6R1f7R5r2R3f1s3r3.19r12F2s5F6f6R1f2F1f2F2s4f5F3f2F7s1F1f7F2f1F2f4F3f6R3F3f1F2f4R1s1F3s2F9s4F2s3F5s1F2s1F1f1F10f1F6f11|.82r5R4F1f1F2s2F2f2R1f2R4f1R1r3f1R1F2s1F2r3.15r4F2r4R2F3s7F9f5F5s6R1f4F3s1F2s5F1f6F3f1F4f2F4f6R1f1F4R1f3F2R1F1s5F11s1F4s2F3f1F2f1F2R2f5F5f2F1f3R1f5F2f4|.79r6R2f1F4s7F4f2R1F17r7.7r3F5r1R2s12F11f1F2f1F3s3F2s3F4s12f6F3f1F4f3F2f4F3s2F1s1F11s4F20f1F2s4F1f19F2f2R1F1f2F2|.74r5R1F3s3F2s1F2s12F1f1F10f1F13r10R1F5s7F1s6F1s3F2s1F7f2F4s1F1s6F3s13f5F9f2F3f1R1s9F22f1F2f3F5f2F6f14F2f4F3f5F2|.69r9R1s1F1s5F1s19F9f1F5R2F17s4F1s15F1s9F3f4F2s8F2s2F1s8F2s2F3R1f2F7f2F1s2R1s4F2s4F3f1F5f3F5f3F2f2F8f3F4f3R1f11F11f3F3|.50r2.9r10R1F1s4F2s1F1s4F1s21F6f1F1f1F6f3F13s11F1s9F2s2F2s7F2f3F2s8F1s3F1s2F1s5F2s4F1f4F6f1F3s1F1s2F2s8F7f1F6f4F2f2F4f1F1f1F1f5F1s1F1s2f8F1f4F5f2F3f2F4|.50r1R1r1.5r10R3F2s4F2s3F2s8F2s1F2s4F1s1F2s3F8f1F1f1F3f3F3s1F2s1F1s15F2s2F1s4F3s2F2s4F5f3F1s1F1s26f9F9s4F2s7F12f5F2f4F6f3F3s4f4F1f2F4f1F6f3F8|.50r7R2F3s6F3s1F2s3f2F2s1F1s4F2s4F6s7F2f2F8f1F3f3F5s3F2s1F1s5R2F2s2F2s7F1s10F3f4F2s9F6s2F2s8f10F2f3R1F5s1F2s5F1s2F2f1F8f12F1f3F2f2F3s5F26f3|.48r3s3r2s15F2s4f1F4s6F2s5F7s3F2s1F5f3F3f2F1f4F8s7F1R1s5F1s5F1s1F1s11F2f2F1s3F2s3F1s3F2f1F12s3F3f11R1s2F3s7F2s2F2f3F2f2F2f4F4f1F1f3F3f2F3f1R1F30f6|.46r5s4F2s4F2s6F4s9F2s5F2s4f1F5s1F5f3F4f2F3f2F1f3F6s8F2f2F1s9F1s15F4s7F6f1F18f6F1f4F1s12F2s2F1f5F2f3R1f4F2f1F2f3F8f2R2F8f1F2R1f1F7f5F5f5|.45r2R1s13F2s4F1s1F2s2F2s7F3s9F1f2F1s4F4f4F3f3F3f2R1F7s10F2s12F1s9F1s4F4s7F8f3F3f2F11R2f2F2f3s8F1f1s7F1f3F2f3F1f2F1f3F3f1F2f3F23f3F1f5F1f2F6f6|.42r3R1s3F2f1F5s3F2s7F2s1F3s9F1s8F1f3F1s2F1s2F2s1R1f3F4f7R1F7s16F1s4F1s15F5s7F3f3F4f2F3f2F12f2F5s9F11f1F3f3F8f3F4f1F5f2F5f4F7f3F3f3F4f2F3f6|.41r3s2F2s1f6F1s2F2s1F1s7F4f1F2s5F2s2F1R2F2s3f2F2s8F1f5F3f5F2s1R1s1F5s7F2s6F2s20F4s4F2s1F1f7F3f3F1f4F10f2F6s2F21f3F1f1F7f2F5f3F4f1F3s2f4F6f5F2f2F3f6F2f5|.39r3s4F1s2R1f3R1s7f1F1s4F2s2F5s5F1s4R2s1F2s3F3s2F4s1F2f7F9R2s1F5s4F2f1F2s4F1f1F1s13F2s5F4s3f1F4f8F2f6F14s1F6s1F15f1F23f4F4f1F1s4F1f3F1f1F4f3F2f14F1f5|.37r3s7F1s2F1s10F5f3F1s1F6s10R2f2F6s1f3F1s3F1f6F10R3f1F3s2F5f1F1s3F3s8F1s8F10s1F1f1F3f8F1f8F17f1F13f1F4f3F9f1F10f1F6f1F3s3F6f2F11f18|.34r2R2s3F1s1F2s1F2s6F4s2F1s3f4F1s1F2f3F2s6F1s1F1f4F8f2F3s2f8F3f1F5f2F3s2F2f1F3s2F2s7F1s3F3s1F4s1F9f2F8f4F4f1F2f1F2f2F3f1F12f2F13f2F1f7F6f5F19f1F6f4F4f4F4f9F2f4F1|.33r2R1f1s3F2s4F1s7F2f2s6f3F1s3F2f3F2s2F2s3F3f1F3s1F10s1F1f13F5f1F3s2F3s6F1s10F9f3s1F1f1F3f2F11f2F11f2F1f1F14f1F2f1F13f8F5f5F3f1F1f1F14f2F4f4F3f4F6f13F2|.30r3R1F1s10F1s11F4s1F1f2R1s4F3f4F2s2F6R1f1F4f1F1f1F1s4F2f1F3f1F6R1f5F9s17F2s1F1f2F1s3F2f1F1s1F7f1F4f1F2f3F14f2F10f1F5f1F1f4F3f4F6f4F4f2F2f3F1f1F5f6F12f6F2f9F3f10F4|.29r2s23F2s1F2f1F2s3F3f3F3f5F2f2F3f3R1F2f3F2s4F12f5F4f1F1f3F3s3F2s8F3s2F20f2F7f3F14f1F16f2F2f4F1f4F30f5F3f1F8f5F3f20F5|.28r2s11F2s9F10s3F2f5F4f5R1F4f4F2s1F19f4F8f3F2s4F4s6F3s6F11f1F4f2F1f1F9f1F1f1F28f1F1f4F3f3F1f4F20f1F13f1F3f1F3f2F5f12F1f3F1f3F6|.26r3s11F1s9F1f1F2f4F3s4F1f6R1f7R1f2F3R1f3F2s1F5f1F6f1F6f4F8f3F6s7F1s2F4s3F12f4F1f4F15f1F23f1F1f16F3f1F1f4F12f2F9f1F8f4F5f9F1f2F2f2F10|.25r2F4s4F1s15F6f1F5s1F3f12F2f1F1s1F3f4F3f1F1s2F2f1F1f1F4f2F6f1F1f2F6f1F8s5F1s1F5s2F2s2F1f1F3f1F4f8F40f4F5f1F11f1F3f1F1f2F10f1F4f2F4f1F3f1F2f6F9f5F6f2F9|.25r2F1s15F1s1F1s9F11f12R1F4s3F2f3F2f1F2s2F9f4F4f2F3f1F4f1F9s6F4s2F1s1F1s2F1f3F6f4F38f1F5f4F23f2F4f2F8f3F6f3F2f6F10f2R1F18|.24r2s4F4s20F2f1F5s1F2f3s1R2f2F2s5F4s2F2f4F3s1F1s1F5f2F1f5F4f1F3f3F7f1F2s3F10s4F3f4F8f2F6f1F2f2F19f1F6f4F4f4F11f2F3f1F5f3F2f6F5f2F8f1F4f1F3f1F2f1F8f1F2f1F16|.23r3s4F2s11F2s2F1s1F1s1F1s2F3s1F1s4F2f1s5F3s4F2s2F1s2F1f3F2f3F8f6F6f2F3f3F4f4F3s2F10s1F1s3F6f3F1f2F3f2F5f10F13f2F8f3F3f1F3f2F1f7F1f3F4f1F3f3F5f3F1f2F32f1F20|.22r3s5F2s8F1s5F3s6F3s14F2s2F5s2F2f7F4f1F6f5F1f3F4f1F2f3F4f6F13s1F1f1F8f12F1f2F1f2F3f1F1f3F1f1F3f2F2f6F2f9F2f2F2f15F11f2F8f1F4f2F12f1F6s1F27|.22r2s7F1s13F2s7F3s7F2s4F4s3F2s6F1f4F8f1F11f5F1f4F15f3F2f1F17f2F1f13F4f7F1f2F1f1F2f1F1f11F5f20F10f3F21f1F10s1F28|.20r2R1s6F1s10F1s3F3s4F1s7F1s3F2s6F2s2F7s3F7f3F1f5F1f3F1f1F3f8F16f5F1f1F1f1F1f2F4f6F2f2F2f4F5f5F1f12F6f8F2s3F3f20F1s1F1f14F15f2F9s2F8f1F19|.18r3F1s3F3s6F3s7F1s6F2s2F2s2F1s1F10s4F4s4F3s2F1f1F3f8F11f3F2f1F9f4F2f2F1f2F1f9F2f3F2f5F2f3F3f1F4f11F1f3F3s2F2f8s5F1f6F2f4F2f7F2s2F1f1F1f9F3f2F14f1F31f5F2|.19r2s3F5s6F2s5F4s3F5s1F2s3F1f1F4f1F5s1F6s1F6s3F4f8F16f1F2f1F5f4F2f21F2f6F1f4F5s1F1f14F3s4F1f8s2F2s1f7F3f2F6f2F4s3F2f14F24f1F16f2F2f2F1f4F1|.18r2R1s5F1s4F1s1F1s3F2s2F6s5F5s1F2f1F10s2f1F12s3F5f6F6f2F11f3F4f1F1f1F4f9F3f8F9f5F3s3F1f12F5s4f3F2f3F6f5F4f5F14f10F16f1F6f1F4f2F15f2F1s5f4|.18r2s1F2s5F1s6F1s4F7s3F3s2F10s3F3s2F5f1F3f3F16f1F1f2F14f2F6f3F1f10F4f7F12f3F4s4f4F5f5F3s4f1F1f1F2f2F17f5F4f1F10f1F21s1F1s1F7f1F3f1F7s2F2f1F6s1F2s1F1f4|.16r3s1F1s6F1s13F4s5F1s1F4s1F3f2F2f1F1s3F1s5F3f2F1f4F7f2F5f1F2f2F18f2F2f15F5f2F4f6F6f1F3f1F4s3f3F5f6F2s4F2f4F2f4F8f1F3f5F1f1F4f3F27s4F19s2F1f3F8s2F4|.15r3s2F1s14F2s4F1s4F2s5F1f2F4f3F9s3F6f5F13f2F1f2F5f2F4f2F4f2F2f7s5r1f4F10f1F3f4F6f1F1f3F2s4f4F5f4F3s2F1f1F1f4F1f2F10f3F3f4F1f1F6f1F28s4F9s2F8s1F7s11|.14r3F1s3F1s8F1s13F5s4F2s1F29f2F11f6F5f2F1s2F1f2F1f1F1f2F4f6r1s4R2f5F2f1F6f2F2f4F3f5F9f3F4f5F1s1F2s2F1s3f4F9f6F6f1F11f1F11f2F11f1F2s2F8s2F7s1F6f2F2s9|.14r2s12F2s13F5f1F2s5F3f1F2f2F12f4F6f6F2f1F7f2F5f1F2s3f8F4f3R1r4s2R2f4F3f4R1f2F2f2F2f3F3f1F12f4F2s1f1F1f2F2s5F6f2F1f1F7f7F2f2F5s2f1F27f4F2s2F9s2F4f1F2f3F11s5|.13r2R1s12F3s2F2s5F1s2F1f5F3s3F1f3F2f3F2f1F1f3F2f2F1f4F8f3F2f1F8f2F1f1F3f1F5f1R1F4f3F4f1F2r2F1s5f4F2f4R2F2s1F6f1F1f1F14f4F1s1F1s1F7s2F8f2F4f2F4f4F4f2F5s2F2f2F17f1F5f5F7f1F1f1F3s1F5f1F2f2F8f1F2s5F1|.12r2R1F2s11F1s3F4s1F2s2F3f3F11f1F3f2F3f2F5f1F13f2F11f6F6f2F1s2F4f2F8f1F3s4f5R1s1F2f4F1s1F19f4F10f2F6f7F6f1F4f1F14s1F21f5F2f5F5f1F1f3F10f4F12f1F1s2F1|.11r3R1s1F2s9F2s1F4f1F5s1F3f2F1f1F20f1F15f2F15f4F1f6F4f4F11f2F8f12F2f3F2f2F3f2F2f3F4f2F9f7F1f8F1f1F4f1F4f4F35f2F2f1F7f1F1f1F1f5F9f3F5f2F5f4F2|.4f1.6f3s2F4s5F2s3F17f2F44f2F3f1F3f2F12f7F8f1F3f2F2s1F1f18F5f8F2f2F1f4F1f1F2f8F1s1F1f7F1f1F5f1F1s1F1f6F6f2F10f1F2f4F1f1F3f3F11f2F2f7F1f1F5f4F5f1F6f1F1f1F3|.3f3.4f3s4F2s9F20f1F5s1F8f2F15f1F12f2F8f2F12f6F1s1F1f1F1f1F6f2F3f10F4f5F8f3F5f18F1s1F2f14F1s1f8F9f2F6f1F1f7F3f2F11f10F1f1F1f1F2f8F8f5F4|f1.2f4.3f3F3s4F1s5F3f3F2f1F1f1F11f4F1f1s1F3f4F4f4F9f2F9f1F1f1F1f1F15f2F7f5s3F1f1F11f10F3f2F1f1F3f6F5f4F2f17F1s2F3f12s1F1f3F3f1F3f8F3f1F2f10F1f4F2f1F3f16F1f11F3f3F3f3F4f1|f13s1F9s2F2f6F4f3F2f1F5f2F1f3F2f9F2f3F5f2F10f1F2f2F2f2F3s1f1F4f2F3f6F3f4F1s4F3f1F6f13F2f2F4f6F2f3F1f24F6f11s2f3F5f9F1f1s2f1F2f10F1f3F4f1F2f17F1f16F3f5F1f2|f11F4f3F2f1F6f7F3f4F9f4F5f1F3f5F14f2F2f5F1f7F1f1F4f2F3f3F9f1F1s1F8f2F1f2F1f16F7f35F8f7F1s1f3F4f11F3f8F1f9F4f1F2f33F1f1F1f1F1f6|f11F4f2F3f4F2f8F1f12F3f4F7f1F8f2F6f11F4f3F7f4F4f3F8f4s1F3f3F8f14F1f1F2f1F5f16F1f16F8f5F1s4F3f12F5f19F2f1F4f16F2f14F2f8|f6.1f4F11f1F3f3F2f3F3f3F2f3F6f3F2f2F2f5F3f5F2f1F4s1F1f2F5f1F2f4F1f1F4f7F3f4F6f2F1f8F3s1F1f1F1f1F8f8F4f2F1f1F1f3F1f2F2f3F3f14F3f2F8f4F1s6F1f2F6f4F1f2F3f4F4f11F3s1F3f3F4f6F2f1F4f12F2f7|f14F4f3F5f5F1f3F1f3F5f2F1f1F2f3F3f3F1f6F2f6F1f1F4s1F3f3F1f2F2f7F4f7F1s1F8f1F5f7F10s1F5f2F4f2F3f12F1f5F2f13F4f2F1f1F5f5F1s4F2s1F2s2F2s2f4F1f4F1f3F6f11F2s1F2f4F2f2F1f2F4f19F1f7|f12F2f1F3f3F1f2F4f2F2f10F5f1F4f2F1f2F4f2F3f8F1f2F4f5F3f11F1f6F2f1F10f3F4f6F8f2F1f2F3f2F5f1F2f15F2f2F2f4F2f7F5f4F3f3F1f2F2s1F3f1F10f3F2f2F2f2F7f13F2f12F3f28|f12F3f6F5f1F1f1F1f1F2f2F3f8F1f2F2f3F11f19F3s1F1f7F2f1F2f5F3f1F1f3F1f2F9f7F3f1F4f6F9f4F1f2F3f1F1f3F6f1F1f2F5f8F9f1F3f1F1f2F1s3F7s1F2f1F2f4F1f2F3f1F8f8F6f12F1f30|f12F1f10F2f6F2f1F2f2F2f10F1f4F4f6F1f15F4f1F2f2F3f6F2f3F2f1F4f9F3f11F2f1F19f3F18f1F1f1F18f6F7s3F5f2F3f8F2f10F2f8F7f43|f15F2f5F4f5F3f4F2f7F4f3F2f1F1f3F2f2F5f11F4f13F3f1F2f3F6s1F2f4F1f13F2f2F6f2F9f5F2s1F1f1F2f1F2f2F7f1F11f1F6f7F1f2s1f2F1s2F2f3F2f1F3f1F2f26F1f2F1f1F2f4F3f36|f15F3f5F3f12F5f1F3f1F1f8F2f3F8f25F3f1F5f2F3f4F3f3F3f2F1f4F1f3F10f1F8f1F3f6F1f2F2f5F8f1F2f2F1f2F2f3F5f9F1s2f1F2s1F2f6F1s2f1F1f17F1f13F3f1F1f1F3f37|f12F2f10F6f1F1f6F1f2F2f1F4f15F2f1F3f6F4f18F1f2F1f1F7f6F1f2F9f1F24f2F2f9F2f5F5f1F2f5F1f7F3s1F2f5F1f1F2s2F1f1F1s2F1f6F2s1F2f17F1f15F4f40|f24F2f1F2f38F1f5F3f1F1f24F2f3F3f5F31f4F1f4F1f3F1f5F16f4F2f1F1f7s3f5F4s2F1f2s1F2f6F3f19F1f15F4f37s3|f51F1f35F1f20s3f2s1f1F4f1F2f7F3f1F5f13F10f2F1f1F1f4F5f10F2f6F1s3F1s2f4F3f1s1F1s1f1s2F2f6F3f19F1f14F2f2F2f34F5|b5f47F1f5F2f26F2f21s1F1f1F5f17F1f16F3f2F1f3F6f5F2s1f19F1s3F1s2f5F2f1F2s1f2s1F1s1F1f6F2f74F4f1|b5f53F3f25F1s1f21F2f2F3f36F1f7F2f9F1s1f20F1s2F2s1F1f3F2f1F1f1s1F1s1F2s1F2s1F2f4F1f80|b4f56F1f4F1f4F1f15F2f21F2f2F1f83F2s1f3F2f3s1F1s1F1s2f1F1s1F2f2F1f82|b4f56F3f1F2f3s1F2f12b2F1s1f5s2f15s1f85s1F1s1f2F3f4s1f1s1f2s1F2s1F1s1f8F1f64b8F2f2|b3f57s3b2s1f2s3b1F1f8b10s4b1s2f28F1f23b2f21F1s2f25s1F3f2s2F1s1f2s1f1F1s1F1s1f19b2f52s2F1s6F1f2|b2f6F1s2f47s6b2f1F1s1b3F2s1F1s1f1s1F1s1b17s1f9b5f26b1f9b4f6b5f9s4f4b1f20s3f1s3F1s1F2s6f12s1f6b3f43F2s2f2F2s2F2s3b1s2F1f1|f2.1f4s5F1f5F1f27s16f3b1f1s2b3s1b26f4b1f1b2f1b8s4F1s1f6b1f4b14f1.2b7f1b6.7f2s1b3f1.5f1b2f4.1f1b3f7s4b5s5b1s3f9s3F1f3b1f1b4f8.8f5s3F1s2f5.4f12F6b6s2|.4f1.2s4f1s11b1s3b3s5b1s8b1s1b14s2f1b1f1.2f6b1f1s1b8f1b14f1.2b2f1b1.4b10s1b2f1b1.2b1f1b4f1b1f1b4f4b2f1.3b2s1b4f1b9.4f2s3f2.5b4s2b15f1s1b5s5F1s1b2s1b9s1b6f1b10f2b6.2f1b3s3b1s2b3s1b4f1.8f6s2F3s1b2s3F1b1|.10f4F2s1f2s2F1s2F1s1F1s3f1s5F3f1s3b6s14b1f4b1f1.10f3b3f1b2s2b4s2f1.16f1b4s1f1b2.4f2b4.10b3.5b1s1b4f1b11f1b2f6.5b3s2b5f1b2f2b4f2s9b1s4b19f1b28s3b2s1b6f2b1f1b2f5b2s2F1s3b1s3b1s2'.split('|');
 // --- MID (parallax .3): Sella del Diavolo | Castello | Torri di Monreale ---
-const MID = mk(2418, VH, g => {
+const MID = mk(2778, VH, g => {
   const r = mulberry32(5), rect = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
   const opening = (x, y, w, h, c) => { rect(x, y + 3, w, h - 3, c); rect(x + 1, y + 1, w - 2, 2, c); rect(x + 3, y, w - 6, 1, c); };
 
@@ -638,7 +661,20 @@ const MID = mk(2418, VH, g => {
   rect(SB0 + 124, 96, 1, 2, '#5a5a6a'); rect(SB0 + 203, 96, 1, 2, '#5a5a6a');
   gText('MERCATO SAN BENEDETTO', SB0 + 122, 88, '#ffffff');
 
-  g.save(); g.translate(1080, 0);                                                                  // Pirri ancora piu' avanti
+  // ===== MONTE URPINU: la pineta, il belvedere e il laghetto =====
+  const U0 = 1944, U1 = 2312, uh = [[U0, 160], [2010, 112], [2090, 92], [2190, 100], [2260, 122], [U1, 160]];
+  for (let x = U0; x <= U1; x++) { const h = Math.round(cosInterp(uh, x));
+    for (let y = h; y < 160; y++) px(g, x, y, (x * 5 + y * 3) % 13 === 0 ? '#5a7a3a' : '#6a8a44'); }
+  rect(2070, 90, 40, 2, '#e8e0cc'); rect(2070, 85, 40, 1, '#e8e0cc');                             // belvedere
+  for (let x = 2070; x < 2110; x += 3) rect(x, 85, 1, 5, '#e8e0cc');
+  const pine = (x, base, k) => { const th = Math.round(12 * k);                                    // pino domestico a ombrello
+    rect(x, base - th, 2, th, '#6a4a2a'); ell(g, x + 1, base - th - 2, 9 * k, 3.5 * k, '#2e5a2a'); ell(g, x - 1, base - th - 4, 6 * k, 2.4 * k, '#3e6a32'); };
+  for (let x = U0 + 18; x < U1 - 18; x += 13 + (r() * 14 | 0)) if (x < 2066 || x > 2114) pine(x, Math.round(cosInterp(uh, x)) + 6, .8 + r() * .5);
+  ell(g, 2150, 150, 40, 6, '#4a9ac8'); ell(g, 2150, 149, 36, 4, '#6ab8e0');                      // il laghetto con la fontana
+  rect(2149, 136, 1, 12, '#d8f0ff'); px(g, 2148, 137, '#d8f0ff'); px(g, 2150, 137, '#d8f0ff'); px(g, 2147, 139, '#d8f0ff'); px(g, 2151, 139, '#d8f0ff');
+  for (let i = 0; i < 4; i++) { const dx = 2128 + i * 12; rect(dx, 148, 3, 2, '#f4f4f0'); px(g, dx - 1, 147, '#2a6a4a'); px(g, dx - 2, 147, '#e8a020'); }   // anatre
+
+  g.save(); g.translate(1440, 0);                                                                  // Pirri ancora piu' avanti
   // ===== PIRRI: le Torri di Monreale =====
   const T_ = (x, w, h, grid, dome, domeL, domeD) => drawTower(g, x, 160, w, h, { grid, dome, domeL, domeD });
   T_(880, 44, 84, '#7a3a5a', '#d8402c', '#f06a50', '#9a2a20');
@@ -654,11 +690,11 @@ const MID = mk(2418, VH, g => {
 });
 
 // --- NEAR (parallax .55): ombrelloni e casotti | oleandri e ficus | cipressi ---
-const NEAR = mk(4166, VH, g => {
-  const W = 4166, r = mulberry32(7), rect = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+const NEAR = mk(4826, VH, g => {
+  const W = 4826, r = mulberry32(7), rect = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
   for (let x = 0; x < W; x++) {
     const h = Math.round(153 + 2 * Math.sin(x / 50) + Math.sin(x / 17));
-    rect(x, h, 1, VH - h, x < 746 ? '#ecd6a0' : x < 1406 ? '#c8bc90' : x < 2066 ? '#a8a6a8' : x < 2726 ? '#6a8a44' : x < 3386 ? '#b8b4ac' : '#3e6a2e');
+    rect(x, h, 1, VH - h, x < 746 ? '#ecd6a0' : x < 1406 ? '#c8bc90' : x < 2066 ? '#a8a6a8' : x < 2726 ? '#6a8a44' : x < 3386 ? '#b8b4ac' : x < 4046 ? '#7a8a4a' : '#3e6a2e');
     if (x >= 1406 && x < 2066) rect(x, h, 1, 1, '#d8d6dc');
     if (x < 746) { rect(x, h, 1, 1, '#fff2cc'); if (r() < .3) px(g, x, h + 2 + (r() * 6 | 0), '#d8be84'); }
   }
@@ -760,7 +796,20 @@ const NEAR = mk(4166, VH, g => {
     if (v < .4) fruitStall(x); else if (v < .65) fishStall(x); else if (v < .82) cheese(x); else crates(x);
     x += 36 + (r() * 14 | 0);
   }
-  x = 3392;
+  const umbrellaPine = x => { rect(x, 118, 3, 38, '#6a4a2a'); rect(x - 3, 126, 3, 1, '#6a4a2a');
+    ell(g, x + 1, 114, 20, 6, '#2a5226'); ell(g, x - 2, 111, 14, 4, '#3a6630');
+    for (let k = 0; k < 12; k++) px(g, x - 16 + (r() * 34 | 0), 110 + (r() * 9 | 0), '#4e7a3a'); };
+  const fountain = x => { rect(x, 148, 20, 8, '#c8c0b0'); rect(x, 148, 20, 1, '#e8e0d0'); rect(x + 2, 149, 16, 2, '#6ab8e0');
+    rect(x + 9, 138, 2, 10, '#c8c0b0'); rect(x + 7, 137, 6, 2, '#c8c0b0'); rect(x + 9, 132, 2, 5, '#d8f0ff'); };
+  const shrub = x => { ell(g, x, 151, 8, 5, '#3e6a32'); for (let k = 0; k < 5; k++) px(g, x - 6 + (r() * 12 | 0), 148 + (r() * 6 | 0), '#5a8a44'); };
+  x = 3400;
+  while (x < 4030) {                // Monte Urpinu
+    const v = r();
+    if (v < .42) umbrellaPine(x + 10); else if (v < .58) bench(x); else if (v < .7) fountain(x);
+    else if (v < .85) shrub(x + 8); else lamp(x, true);
+    x += 30 + (r() * 22 | 0);
+  }
+  x = 4052;
   while (x < W - 10) {              // Pirri
     const v = r();
     if (v < .62) { const n = 1 + (r() * 3 | 0); for (let k = 0; k < n && x < W - 8; k++) { cypress(x, 24 + (r() * 16 | 0), 3 + (r() * 2 | 0)); x += 6 + (r() * 3 | 0); } }
@@ -778,15 +827,16 @@ const FINAL = mk(320, VH, g => {
 // ====================================================================
 //  LIVELLO
 // ====================================================================
-const LW = 457, LH = 12;
-const CATH_X = 437 * T, DOOR_X = CATH_X + 160, CPS = [120, 190, 260, 348];   // checkpoint
+const LW = 532, LH = 12;
+const CATH_X = 512 * T, DOOR_X = CATH_X + 160, CPS = [120, 190, 260, 348, 425];   // checkpoint
 const ZONES = [{ name: 'IL POETTO', sub: 'SPIAGGIA E SELLA DEL DIAVOLO' },
                { name: 'MOLENTARGIUS', sub: 'SALINE, FENICOTTERI E MERDONAS' },
                { name: 'VIA ROMA', sub: 'I PORTICI, IL PORTO E IL PALAZZO CIVICO' },
                { name: 'CASTELLO', sub: "BASTIONE DI SAINT REMY E TORRE DELL'ELEFANTE" },
                { name: 'SAN BENEDETTO', sub: 'IL MERCATO: PESCE, FRUTTA E VERDURA' },
+               { name: 'MONTE URPINU', sub: 'LA PINETA E IL LAGHETTO DEI PAVONI' },
                { name: 'PIRRI', sub: 'LE TORRI DI MONREALE' }];
-const zoneOf = tx => tx < 76 ? 0 : tx < 151 ? 1 : tx < 226 ? 2 : tx < 301 ? 3 : tx < 376 ? 4 : 5;
+const zoneOf = tx => tx < 76 ? 0 : tx < 151 ? 1 : tx < 226 ? 2 : tx < 301 ? 3 : tx < 376 ? 4 : tx < 451 ? 5 : 6;
 const SOLID = new Set(['#', 'B', '?', '!', 'U', '=']);
 let map, items, enemies;
 // nemici a terra: Merdona (nutria), Mamuthone, porcheddu, parcheggiatore
@@ -795,7 +845,8 @@ const EDEF = { mer: { w: 14, h: 8, v: .45, pts: 100, col: ['#8a5a34', '#d4a66c',
                por: { w: 13, h: 8, v: .5, pts: 200, col: ['#ffb0c8', '#d8708e'] },
                park: { w: 10, h: 15, v: .35, pts: 200, col: ['#dcff3a', '#98a0b8', '#2f56b0'] },
                gra: { w: 13, h: 7, v: .7, pts: 100, col: ['#e87818', '#8a1e22'] },
-               pol: { w: 11, h: 9, v: .4, pts: 200, col: ['#c87ae0', '#7a3a9a'] } };
+               pol: { w: 11, h: 9, v: .4, pts: 200, col: ['#c87ae0', '#7a3a9a'] },
+               pav: { w: 14, h: 11, v: .35, pts: 200, col: ['#3a8ef0', '#1e9a8a', '#f0c040'] } };
 
 function buildLevel() {
   map = [...Array(LH)].map(() => Array(LW).fill('.'));
@@ -804,13 +855,13 @@ function buildLevel() {
   const put = (x, y, s) => { for (let i = 0; i < s.length; i++) map[y][x + i] = s[i]; };
   const tes = (x, y, n = 1) => { for (let i = 0; i < n; i++) items.push({ x: (x + i) * T + 4, y: y * T + 4, w: 8, h: 8, got: false }); };
   const foe = (type, x) => { const d = EDEF[type];
-    enemies.push({ type, ground: true, x: x * T, y: 10 * T - d.h, w: d.w, h: d.h, vx: -d.v, vy: 0, alive: true, act: false, anim: 0, hop: 0 }); };
-  const mer = x => foe('mer', x), mam = x => foe('mam', x), por = x => foe('por', x), park = x => foe('park', x), gra = x => foe('gra', x), pol = x => foe('pol', x);
+    enemies.push({ type, ground: true, x: x * T, y: 10 * T - d.h, w: d.w, h: d.h, vx: -d.v, vy: 0, alive: true, act: false, anim: 0, hop: 0, fan: 0, cool: 0, dir: -1 }); };
+  const mer = x => foe('mer', x), mam = x => foe('mam', x), por = x => foe('por', x), park = x => foe('park', x), gra = x => foe('gra', x), pol = x => foe('pol', x), pav = x => foe('pav', x);
   const gull = (x, y) => enemies.push({ type: 'gull', x: x * T, y: y * T, baseY: y * T, w: 12, h: 6, vx: -.8, vy: 0, t: 0, alive: true, act: false });
 
   fill(0, 10, LW - 1, 11, '#');
   for (const [a, b] of [[24, 26], [47, 49], [78, 81], [100, 102], [124, 127], [141, 143], [170, 172], [203, 205],
-                        [268, 270], [300, 303], [331, 333], [375, 378], [409, 411]]) fill(a, 10, b, 11, '.');
+                        [268, 270], [300, 303], [331, 333], [375, 378], [405, 407], [450, 453], [484, 486]]) fill(a, 10, b, 11, '.');
 
   // 1 - la partenza
   tes(6, 8, 3);
@@ -867,13 +918,23 @@ function buildLevel() {
   fill(355, 9, 358, 9, '#'); fill(356, 8, 358, 8, '#'); tes(356, 6, 3);
   gra(361); put(363, 6, 'B?B'); pol(367); gra(371);
   tes(372, 8, 2); put(376, 7, '==');
+  // ===== MONTE URPINU: la pineta dei pavoni =====
+  tes(381, 7, 3); pav(385);
+  put(388, 6, 'B?B'); mer(392);
+  fill(395, 9, 397, 9, '#'); fill(396, 8, 397, 8, '#'); tes(396, 6, 2);
+  pav(401); put(404, 7, '==='); tes(404, 6, 3);
+  put(410, 6, '?B?B?'); tes(411, 3, 3); pav(415);
+  pav(421); mer(429);
+  put(428, 6, 'B?B'); pav(433);
+  fill(438, 9, 441, 9, '#'); fill(439, 8, 441, 8, '#'); fill(440, 7, 441, 7, '#'); tes(440, 5, 2);
+  pav(445); tes(447, 8, 2); put(451, 7, '==');
   // ===== PIRRI =====
-  put(385, 6, '?B?B?'); tes(385, 3, 5);
-  por(390); gull(393, 8); mer(396); mam(401); mer(405);
+  put(460, 6, '?B?B?'); tes(460, 3, 5);
+  por(465); gull(468, 8); mer(471); mam(476); mer(480);
   // 5 - verso il Duomo
-  tes(409, 7, 3);
-  put(415, 6, 'B?B'); por(420); put(423, 6, '??'); gull(427, 8); mam(429);
-  tes(430, 8, 5);
+  tes(484, 7, 3);
+  put(490, 6, 'B?B'); por(495); put(498, 6, '??'); gull(502, 8); mam(504);
+  tes(505, 8, 5);
 }
 const tileAt = (tx, ty) => (tx < 0 || tx >= LW) ? '#' : (ty < 0 || ty >= LH) ? '.' : map[ty][tx];
 const solidAt = (x, y) => SOLID.has(tileAt(Math.floor(x / T), Math.floor(y / T)));
@@ -902,7 +963,7 @@ function collideY(e) {
 //  STATO DI GIOCO
 // ====================================================================
 let zone = -1, zoneT = 0;
-let state = 'title', frame = 0, score = 0, tess = 0, lives = 3, time = 540, cp = 0, camX = 0, winT = 0, winDone = false;
+let state = 'title', frame = 0, score = 0, tess = 0, lives = 3, time = 630, cp = 0, camX = 0, winT = 0, winDone = false;
 let hi = 0; try { hi = +localStorage.getItem('monreale-hi') || 0; } catch (e) {}
 let P = { dead: false };
 let parts = [], floats = [], bumps = [];
@@ -957,7 +1018,7 @@ function resetLevel() {
   P = { x: sx, y: 10 * T - 13, w: 8, h: 13, vx: 0, vy: 0, face: 1, onGround: true, coyote: 0, jbuf: 0,
         jumping: false, anim: 0, dead: false, deadT: 0, alpha: 1 };
   camX = Math.max(0, Math.min(LW * T - VW, sx - VW * .42));
-  time = 540; jumpPressed = false; zone = -1;
+  time = 630; jumpPressed = false; zone = -1;
 }
 function newGame() { score = 0; tess = 0; lives = 3; cp = 0; mStep = 0; resetLevel(); state = 'play'; }
 function addTess(n, x, y) {
@@ -968,7 +1029,7 @@ function burst(x, y, cols, n = 8) {
   for (let i = 0; i < n; i++) parts.push({ x, y, vx: (Math.random() - .5) * 3, vy: -Math.random() * 3 - .5, t: 30 + Math.random() * 15, col: cols[i % cols.length] });
 }
 // fumetto quando un nemico ti prende
-const EMSG = { mer: 'OH NO, UNA MERDONA!', mam: 'OH NO, UN MAMUTHONE!', por: 'OH NO, UN PORCHEDDU!', park: 'OH NO, UN PARCHEGGIATORE ABUSIVO!', gra: 'OH NO, UN GRANCHIO!', pol: 'OH NO, UN POLPO!', gull: 'OH NO, UN GABBIANO!' };
+const EMSG = { mer: 'OH NO, UNA MERDONA!', mam: 'OH NO, UN MAMUTHONE!', por: 'OH NO, UN PORCHEDDU!', park: 'OH NO, UN PARCHEGGIATORE ABUSIVO!', gra: 'OH NO, UN GRANCHIO!', pol: 'OH NO, UN POLPO!', pav: 'OH NO, UN PAVONE!', gull: 'OH NO, UN GABBIANO!' };
 function die(msg) {
   if (P.dead) return;
   P.msg = msg || ''; P.msgX = P.x + P.w / 2; P.msgY = Math.min(P.y, 10 * T - 4);   // se cadi, il fumetto resta a filo strada
@@ -1045,6 +1106,11 @@ function updatePlay() {
         const dx = (P.x + P.w / 2) - (e.x + e.w / 2), near = !P.dead && Math.abs(dx) < 120 && Math.abs(P.y + P.h - e.y - e.h) < 20;
         e.vx = near ? Math.sign(dx) * 1.4 : Math.sign(e.vx || -1) * .5;
         if (near) e.anim += .15;
+      }
+      if (e.type === 'pav') {                                     // il pavone si ferma e fa la ruota se ti avvicini
+        if (e.vx) e.dir = Math.sign(e.vx);
+        if (e.fan > 0) { e.vx = 0; if (--e.fan === 0) e.vx = e.dir * EDEF.pav.v; }
+        else if (--e.cool <= 0 && !P.dead && Math.abs((P.x + P.w / 2) - (e.x + e.w / 2)) < 70) { e.fan = 80; e.cool = 220; e.vx = 0; }
       }
       e.vy = Math.min(e.vy + .35, 6);
       e.x += e.vx; if (collideX(e)) e.vx = -e.vx;
@@ -1154,7 +1220,8 @@ function drawWorld() {
     let img;
     const z = zoneOf(tx), top = tileAt(tx, ty - 1) !== '#';
     if (c === '#') img = z === 0 ? (top ? TILE.sandTop : TILE.sand) : z === 1 ? (top ? TILE.saltTop : TILE.salt) : z === 2 ? (top ? TILE.walkTop : TILE.walk)
-      : z === 3 ? (top ? TILE.paveTop : TILE.pave) : z === 4 ? (top ? TILE.mktTop : TILE.mkt) : (top ? TILE.groundTop : TILE.ground);
+      : z === 3 ? (top ? TILE.paveTop : TILE.pave) : z === 4 ? (top ? TILE.mktTop : TILE.mkt) : z === 5 ? (top ? TILE.pineTop : TILE.pine)
+      : (top ? TILE.groundTop : TILE.ground);
     else if (c === '?' || c === '!') img = TILE.Q[Math.min(qf, 3)];
     else if (c === '=') img = TILE.P; else if (c === 'C' && z === 0) img = TILE.urchin; else img = TILE[c];
     let bo = 0; for (const b of bumps) if (b.tx === tx && b.ty === ty) bo = Math.round(Math.sin((10 - b.t) / 10 * Math.PI) * 4);
@@ -1166,7 +1233,7 @@ function drawWorld() {
   for (const e of enemies) {
     if (!e.act) continue;
     const ex = Math.round(e.x - cx), ey = Math.round(e.y);
-    const set = ESPR[e.type][e.vx > 0 ? 'R' : 'L'];
+    const set = ESPR[e.type === 'pav' && e.fan > 0 ? 'pavFan' : e.type][(e.vx || e.dir || -1) > 0 ? 'R' : 'L'];
     const img = set[(e.ground ? Math.floor(e.anim) : Math.floor(e.t / 10)) % 2];
     const dx = Math.round(e.x + e.w / 2 - img.width / 2 - cx);
     const dy = e.ground ? Math.round(e.y + e.h - img.height + 2) : ey - 4;
