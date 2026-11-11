@@ -1080,7 +1080,7 @@ function resetLevel() {
   P = { x: sx, y: 10 * T - 13, w: 8, h: 13, vx: 0, vy: 0, face: 1, onGround: true, coyote: 0, jbuf: 0,
         jumping: false, anim: 0, dead: false, deadT: 0, alpha: 1 };
   camX = Math.max(0, Math.min(LW * T - VW, sx - VW * .42));
-  time = 720; jumpPressed = false; zone = -1;
+  time = 720; jumpPressed = false; zone = -1; zoneT = 0;   // alla ripartenza niente riquadro della zona vecchia
 }
 function newGame() { score = 0; tess = 0; lives = 3; cp = 0; mStep = 0; resetLevel(); state = 'play'; }
 function addTess(n, x, y) {
@@ -1392,7 +1392,7 @@ function draw() {
   if ((state === 'play' || state === 'pause') && P.dead && P.msg && P.deadT > 3) bubble(P.msg, P.msgX, P.msgY);
   if (state === 'play' && !P.dead && frame % 150 < 90) for (const e of enemies)   // il parcheggiatore chiede l'euro
     if (e.act && e.alive && e.type === 'park' && Math.abs(P.x - e.x) < 110) bubble('UN EURO, CAPO?', e.x + e.w / 2, e.y);
-  if (state === 'play' && zoneT > 0 && zoneT < 150) {
+  if (state === 'play' && zoneT > 0 && zoneT < 150 && ZONES[zone]) {
     const z = ZONES[zone]; box(18, 30); ctext(z.name, 23, '#f0c040', 2); ctext(z.sub, 39, '#fff');
   }
   if (state === 'pause') { dim(); ctext('PAUSA', 80, '#f0c040', 3); ctext(touchUI ? 'TOCCA PER CONTINUARE' : 'PREMI P PER CONTINUARE', 108, '#fff'); }
@@ -1535,10 +1535,12 @@ buildLevel();
 let acc = 0, last = performance.now();
 const STEP = 1000 / 60;
 function loop(now) {
+  requestAnimationFrame(loop);                     // prima di tutto: anche se un fotogramma va in errore, il gioco non si pianta
   acc += Math.min(100, now - last); last = now;
-  while (acc >= STEP) { step(); acc -= STEP; }
-  draw();
-  requestAnimationFrame(loop);
+  try {
+    while (acc >= STEP) { step(); acc -= STEP; }
+    draw();
+  } catch (err) { acc = 0; console.error(err); }
 }
 requestAnimationFrame(loop);
 })();
