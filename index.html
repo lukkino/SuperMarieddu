@@ -1084,7 +1084,8 @@ function resetLevel() {
   parts = []; floats = []; bumps = [];
   const sx = cp ? cp * T : 3 * T;
   P = { x: sx, y: 10 * T - 13, w: 8, h: 13, vx: 0, vy: 0, face: 1, onGround: true, coyote: 0, jbuf: 0,
-        jumping: false, anim: 0, dead: false, deadT: 0, alpha: 1 };
+        jumping: false, anim: 0, dead: false, deadT: 0, alpha: 1, inv: cp ? 120 : 0 };
+  if (cp) enemies = enemies.filter(e => e.x < (cp - 1) * T || e.x >= (cp + 4) * T);   // niente nemici addosso al checkpoint
   camX = Math.max(0, Math.min(LW * T - VW, sx - VW * .42));
   time = 720; jumpPressed = false; zone = -1; zoneT = 0;   // alla ripartenza niente riquadro della zona vecchia
 }
@@ -1166,6 +1167,7 @@ function updatePlay() {
   for (const it of items) if (!it.got && overlap(P, it)) { it.got = true; SFX.coin(); addTess(1, it.x, it.y); burst(it.x + 4, it.y + 4, ['#f8e070', '#fff6b0'], 4); }
 
   // nemici
+  if (P.inv > 0) P.inv--;   // invulnerabile per 2 secondi dopo la ripartenza
   for (const e of enemies) {
     if (!e.act) { if (e.x < camX + VW + 24) e.act = true; else continue; }
     if (!e.alive) { e.dt--; if (e.flip) { e.vy += .3; e.y += e.vy; } continue; }
@@ -1196,7 +1198,7 @@ function updatePlay() {
     }
     if (!P.dead && overlap(P, e)) {
       if (P.vy > 0 && P.y + P.h - e.y < 8) { kill(e, false); P.vy = K.jump ? -6 : -3.8; P.jumping = false; SFX.stomp(); }
-      else die(EMSG[e.type]);
+      else if (!(P.inv > 0)) die(EMSG[e.type]);
     }
   }
   enemies = enemies.filter(e => !e.gone && (e.alive || e.dt > 0));
@@ -1329,7 +1331,7 @@ function drawWorld() {
     else if (!P.onGround) img = P.face < 0 ? SPR.jumpL : SPR.jump;
     else if (Math.abs(P.vx) > .2) img = Math.floor(P.anim) % 2 ? (P.face < 0 ? SPR.walk1L : SPR.walk1) : (P.face < 0 ? SPR.walk2L : SPR.walk2);
     else img = P.face < 0 ? SPR.standL : SPR.stand;
-    ctx.globalAlpha = state === 'win' ? Math.max(0, P.alpha) : 1;
+    ctx.globalAlpha = state === 'win' ? Math.max(0, P.alpha) : (P.inv > 0 && (P.inv >> 2) % 2 ? .35 : 1);
     ctx.drawImage(img, Math.round(P.x - 1 - cx), Math.round(P.y));
     ctx.globalAlpha = 1;
   }
