@@ -827,7 +827,7 @@ function updatePlay() {
   if (cy === 1) { P.onGround = true; P.vy = 0; }
   else if (cy) { P.vy = .5; P.jumping = false; hitBlock(cy.tx, cy.ty); }
   P.anim += Math.abs(P.vx) * .12;
-  if (P.y > VH + 8) die(zoneOf(Math.floor((P.x + P.w / 2) / T)) === 0 ? 'SPLASH! NEL CANALE DI MAMMARRANCA!' : 'OH NO, CHE BURRONE!');
+  if (P.y > VH + 8) die(zoneOf(Math.floor((P.x + P.w / 2) / T)) === 0 ? 'SPLASH! NEL CANALE DI MAMMARRANCA!' : 'OH NO, UNU STAMPU!');
 
 
   // tessere
