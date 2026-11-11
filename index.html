@@ -70,6 +70,8 @@ const VERSION = '1.5.0';
 const VW = 320, VH = 192, T = 16;
 const cv = document.getElementById('game'), ctx = cv.getContext('2d');
 const wrap = document.getElementById('wrap'), crt = document.getElementById('crt');
+let scanOn = false;   // righe del televisore (effetto CRT): spente di default, tasto C
+try { scanOn = localStorage.getItem('monreale-crt') === '1'; } catch (e) {}
 cv.width = VW; cv.height = VH; ctx.imageSmoothingEnabled = false;
 
 const touchEl = document.getElementById('touch'), dpad = document.getElementById('dpad'), tbar = document.getElementById('tbar');
@@ -92,7 +94,7 @@ function resize() {
   tbar.style.top = Math.round(top + 12 * s + 4) + 'px';          // subito sotto la barra dei punti
   tbar.style.right = Math.max(6, Math.round((W - w) / 2 + 6)) + 'px';
   const p = Math.max(2, s);
-  crt.style.backgroundImage =
+  crt.style.backgroundImage = !scanOn ? 'none' :
     `repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0px,rgba(0,0,0,0) ${p - 1}px,rgba(0,0,0,.22) ${p - 1}px,rgba(0,0,0,.22) ${p}px)`;
 }
 function showTouch() { if (touchUI) return; touchUI = true; touchEl.classList.add('on'); resize(); }
@@ -1390,7 +1392,7 @@ addEventListener('keydown', e => {
   if (e.code === 'Enter' || (k === 'jump' && state !== 'play')) confirm();
   if (e.code === 'KeyP' || e.code === 'Escape') togglePause();
   if (e.code === 'KeyM') musicOn = !musicOn;
-  if (e.code === 'KeyC') crt.classList.toggle('off');
+  if (e.code === 'KeyC') { scanOn = !scanOn; try { localStorage.setItem('monreale-crt', scanOn ? '1' : '0'); } catch (err) {} resize(); }
 });
 addEventListener('keyup', e => { const k = KEYMAP[e.code]; if (k) { KB[k] = 0; syncK(); } });
 function releaseAll() { for (const k in K) KB[k] = TK[k] = 0; ptrs.clear(); syncTouch(); if (state === 'play') state = 'pause'; }
