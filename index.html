@@ -756,8 +756,11 @@ function addTess(n, x, y) {
 function burst(x, y, cols, n = 8) {
   for (let i = 0; i < n; i++) parts.push({ x, y, vx: (Math.random() - .5) * 3, vy: -Math.random() * 3 - .5, t: 30 + Math.random() * 15, col: cols[i % cols.length] });
 }
-function die() {
+// fumetto quando un nemico ti prende
+const EMSG = { liz: 'OH NO, UN TILIGUGU!', mam: 'OH NO, UN MAMUTHONE!', por: 'OH NO, UN PORCHEDDU!', gull: 'OH NO, UN GABBIANO!' };
+function die(msg) {
   if (P.dead) return;
+  P.msg = msg || ''; P.msgX = P.x + P.w / 2; P.msgY = P.y;
   P.dead = true; P.deadT = 0; P.vx = 0; P.vy = P.y > VH ? 0 : -5; SFX.die();
 }
 function hitBlock(tx, ty) {
@@ -851,7 +854,7 @@ function updatePlay() {
     }
     if (!P.dead && overlap(P, e)) {
       if (P.vy > 0 && P.y + P.h - e.y < 8) { kill(e, false); P.vy = K.jump ? -6 : -3.8; P.jumping = false; SFX.stomp(); }
-      else die();
+      else die(EMSG[e.type]);
     }
   }
   enemies = enemies.filter(e => !e.gone && (e.alive || e.dt > 0));
@@ -1004,6 +1007,19 @@ function drawBoard(y, mine) {
   if (board.length && boardMsg) ctext(boardMsg, y + 129, '#ff9070');
   else if (mine && myRank > 10) ctext('LA TUA POSIZIONE: ' + myRank, y + 129, '#f8e070');
 }
+function bubble(str, wx, wy) {
+  const w = textW(str) + 8, h = 11, sx = Math.round(wx - Math.floor(camX));
+  const x = Math.max(2, Math.min(VW - w - 2, sx - (w >> 1))), y = Math.max(14, Math.round(wy) - h - 8);
+  ctx.fillStyle = '#1b1424'; ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(x, y, w, h);
+  const tx = Math.max(x + 2, Math.min(x + w - 7, sx - 2));                // codina verso il giocatore
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = '#1b1424'; ctx.fillRect(tx - 1 + i, y + h + i, 7 - 2 * i, 1);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(tx + i, y + h + i, 5 - 2 * i, 1);
+  }
+  ctx.fillStyle = '#1b1424'; ctx.fillRect(tx + 2, y + h + 3, 1, 1);
+  text(str, x + 4, y + 3, '#1b1424', 1, null);
+}
 function draw() {
   drawWorld();
   if (state === 'title' && board.length && (frame - titleT) % 720 >= 420) { dim(.35); drawBoard(20, false); return; }
@@ -1020,6 +1036,7 @@ function draw() {
     return;
   }
   hud();
+  if ((state === 'play' || state === 'pause') && P.dead && P.msg && P.deadT > 3) bubble(P.msg, P.msgX, P.msgY);
   if (state === 'play' && zoneT > 0 && zoneT < 150) {
     const z = ZONES[zone]; box(18, 30); ctext(z.name, 23, '#f0c040', 2); ctext(z.sub, 39, '#fff');
   }
