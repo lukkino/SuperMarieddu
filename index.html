@@ -307,12 +307,12 @@ TILE.groundTop = mk(16, 16, g => {
   g.fillStyle = '#d4dc6a'; g.fillRect(0, 0, 16, 1);
   g.fillStyle = '#5f8a2a'; for (let x = 0; x < 16; x++) g.fillRect(x, 4, 1, (x * 7) % 3 ? 1 : 2);
 });
-TILE.B = mk(16, 16, g => {   // blocchi di pietra calcarea di Cagliari
-  g.fillStyle = '#e2d0a0'; g.fillRect(0, 0, 16, 16);
-  for (let i = 0; i < 14; i++) px(g, rnd() * 16 | 0, rnd() * 16 | 0, rnd() < .5 ? '#d4c08c' : '#efe2b8');
-  g.fillStyle = '#a8946a'; g.fillRect(0, 7, 16, 1); g.fillRect(0, 15, 16, 1); g.fillRect(9, 0, 1, 7); g.fillRect(4, 8, 1, 7);
-  g.fillStyle = '#fff4d0'; g.fillRect(0, 0, 9, 1); g.fillRect(10, 0, 6, 1); g.fillRect(0, 8, 4, 1); g.fillRect(5, 8, 11, 1);
-  g.fillStyle = '#1b1424'; g.fillRect(15, 0, 1, 16);
+TILE.B = mk(16, 16, g => {   // blocchi da saltare: blu scuro con bordo nero, si staccano da cielo e palazzi chiari
+  g.fillStyle = '#0e0c18'; g.fillRect(0, 0, 16, 16);
+  g.fillStyle = '#2f4a9a'; g.fillRect(1, 1, 14, 14);
+  g.fillStyle = '#1a2a60'; g.fillRect(1, 7, 14, 1); g.fillRect(9, 1, 1, 6); g.fillRect(4, 8, 1, 7);
+  g.fillStyle = '#7aa4ff'; g.fillRect(1, 1, 8, 1); g.fillRect(10, 1, 5, 1); g.fillRect(1, 8, 3, 1); g.fillRect(5, 8, 10, 1);
+  g.fillStyle = '#4c6cc8'; g.fillRect(1, 2, 1, 5); g.fillRect(10, 2, 1, 5); g.fillRect(5, 9, 1, 6);
 });
 TILE.Q = [6, 14, 22, -99].map(s => mk(16, 16, g => {   // motivo di tappeto sardo
   g.fillStyle = '#7a1a1a'; g.fillRect(0, 0, 16, 16);
@@ -330,12 +330,11 @@ TILE.U = mk(16, 16, g => {
   g.fillStyle = '#b48c5c'; g.fillRect(1, 1, 14, 1);
   [[3, 3], [12, 3], [3, 12], [12, 12]].forEach(([x, y]) => px(g, x, y, '#5a3410'));
 });
-TILE.P = mk(16, 16, g => {
-  g.fillStyle = '#e6d4a6'; g.fillRect(0, 0, 16, 16);
-  g.fillStyle = '#fff2cc'; g.fillRect(0, 0, 16, 2);
-  g.fillStyle = '#c8b080'; g.fillRect(0, 8, 16, 1); g.fillRect(7, 0, 1, 8); g.fillRect(12, 8, 1, 8);
-  g.fillStyle = '#a88c5a'; g.fillRect(0, 13, 16, 2);
-  g.fillStyle = '#1b1424'; g.fillRect(0, 15, 16, 1);
+TILE.P = mk(16, 16, g => {   // piattaforme sospese: assi blu con il bordo alto chiaro
+  g.fillStyle = '#0e0c18'; g.fillRect(0, 0, 16, 16);
+  g.fillStyle = '#2f4a9a'; g.fillRect(0, 1, 16, 13);
+  g.fillStyle = '#9cc0ff'; g.fillRect(0, 1, 16, 2);
+  g.fillStyle = '#1a2a60'; g.fillRect(0, 8, 16, 1); g.fillRect(7, 3, 1, 5); g.fillRect(12, 9, 1, 5); g.fillRect(15, 1, 1, 13);
 });
 TILE.C = mk(16, 16, g => {
   const E = (cx, cy, rx, ry, c) => { g.fillStyle = c;
@@ -1369,7 +1368,7 @@ function drawMap() {
       for (let ty = 0; ty < LH; ty++) {
         const c = map[ty][tx]; if (c === '.') continue;
         if (c === '#') { const top = tileAt(tx, ty - 1) !== '#'; R(X, my + ty * 2, 2, 2, mapCols[z][1]); if (top) R(X, my + ty * 2, 2, 1, mapCols[z][0]); }
-        else R(X, my + ty * 2, 2, 2, c === '?' || c === '!' ? '#f8d030' : c === 'B' ? '#c86838' : c === 'U' ? '#7a5030' : c === '=' ? '#f0e0b8' : '#ff3030');
+        else R(X, my + ty * 2, 2, 2, c === '?' || c === '!' ? '#f8d030' : c === 'B' ? '#5070d8' : c === 'U' ? '#7a5030' : c === '=' ? '#9cc0ff' : '#ff3030');
       }
     }
     for (let z = 0; z < 8; z++) if (MAP_ZS[z] >= a && MAP_ZS[z] < b) {                // nomi dei quartieri
