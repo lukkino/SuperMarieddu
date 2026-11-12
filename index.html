@@ -1221,13 +1221,13 @@ function localBoard() { try { return JSON.parse(localStorage.getItem('monreale-b
 async function loadBoard() {
   if (!lbOnline) { board = localBoard(); return; }
   try {
-    const r = await fetch(LB_URL + '/rest/v1/classifica?select=id,nome,punti,vinto&order=punti.desc,creato.asc&limit=10', { headers: lbHead() });
+    const r = await fetch(LB_URL + '/rest/v1/classifica?select=id,nome,punti,vinto,creato&order=punti.desc,creato.asc&limit=10', { headers: lbHead() });
     if (!r.ok) throw new Error(r.status);
     board = await r.json(); boardMsg = '';
   } catch (e) { boardMsg = 'CLASSIFICA NON RAGGIUNGIBILE'; }
 }
 async function submitScore(nome, punti, vinto) {
-  myEntry = { id: 'io' + Date.now(), nome, punti, vinto }; myRank = 0; boardMsg = '';
+  myEntry = { id: 'io' + Date.now(), nome, punti, vinto, creato: new Date().toISOString() }; myRank = 0; boardMsg = '';
   if (!lbOnline) {
     const b = localBoard(); b.push(myEntry); b.sort((x, y) => y.punti - x.punti);
     myRank = b.indexOf(myEntry) + 1; board = b.slice(0, 10);
@@ -1572,6 +1572,12 @@ function drawMap() {
 function dim(a = .55) { ctx.fillStyle = `rgba(13,10,20,${a})`; ctx.fillRect(0, 0, VW, VH); }
 function box(y, h) { ctx.fillStyle = 'rgba(27,20,36,.85)'; ctx.fillRect(20, y, VW - 40, h); ctx.fillStyle = '#f0c040';
   ctx.fillRect(20, y, VW - 40, 1); ctx.fillRect(20, y + h - 1, VW - 40, 1); ctx.fillRect(20, y, 1, h); ctx.fillRect(VW - 21, y, 1, h); }
+// data e ora del record, nell'ora locale di chi guarda: 12/11/26 21:30
+function boardDate(iso) {
+  const d = new Date(iso); if (!iso || isNaN(d)) return '';
+  const z = n => String(n).padStart(2, '0');
+  return z(d.getDate()) + '/' + z(d.getMonth() + 1) + '/' + z(d.getFullYear() % 100) + ' ' + z(d.getHours()) + ':' + z(d.getMinutes());
+}
 function drawBoard(y, mine) {
   box(y, 152);
   ctext(lbOnline ? 'CLASSIFICA' : 'CLASSIFICA LOCALE', y + 7, '#f0c040', 2);
@@ -1579,8 +1585,9 @@ function drawBoard(y, mine) {
   board.forEach((e, i) => {
     const yy = y + 27 + i * 10, me = mine && myEntry && e.id === myEntry.id;
     const col = me ? (frame % 30 < 20 ? '#f8e070' : '#ffffff') : i === 0 ? '#f0c040' : i < 3 ? '#9ad0ff' : '#e8e0d0';
-    text(pad(i + 1, 2) + '.', 74, yy, col); text(e.nome, 94, yy, col); text(pad(e.punti, 6), 206, yy, col);
-    if (e.vinto) drawTessera(234, yy - 2, 0);                           // ha raggiunto le torri
+    text(pad(i + 1, 2) + '.', 70, yy, col); text(e.nome, 86, yy, col); text(pad(e.punti, 6), 132, yy, col);
+    if (e.vinto) drawTessera(158, yy - 2, 0);
+    text(boardDate(e.creato), 176, yy, me ? col : '#a898c0');                           // ha raggiunto le torri
   });
   if (board.length && boardMsg) ctext(boardMsg, y + 129, '#ff9070');
   else if (mine && myRank > 10) ctext('LA TUA POSIZIONE: ' + myRank, y + 129, '#f8e070');
